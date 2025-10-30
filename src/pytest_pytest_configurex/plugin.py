@@ -6,7 +6,15 @@ from pytest_pytest_configurex.discovery import load_settings_for_config
 
 
 def pytest_addoption(parser):
-    """Register CLI options for configurex settings."""
+    """Register CLI options and ini options for configurex settings."""
+    # Register ini option for explicit settings class registration
+    parser.addini(
+        "configurex_settings_class",
+        help="Explicit path to custom PytestSettings class (e.g., 'myapp.settings.MySettings')",
+        type="string",
+        default=None,
+    )
+
     group = parser.getgroup("configurex", "pytest-configurex configuration")
 
     # Verbosity
