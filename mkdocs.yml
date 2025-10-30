@@ -1,0 +1,10 @@
+site_name: pytest-configurex
+site_description: a simple envvar way of managing pytest execution
+site_author: Drew Ayling
+
+theme: readthedocs
+
+repo_url: https://github.com/dsayling/pytest-configurex
+
+pages:
+- Home: index.md
