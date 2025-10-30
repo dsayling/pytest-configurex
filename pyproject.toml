@@ -9,7 +9,7 @@ name = "pytest-configurex"
 description = "a .env pytest plugin built ontop of pydantic-settings"
 version = "0.0.1"
 readme = "README.rst"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 authors = [
     { name = "Drew Ayling", email = "drew@ayling.fyi" },
 ]
@@ -24,11 +24,10 @@ classifiers = [
     "Topic :: Software Development :: Testing",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
@@ -60,7 +59,7 @@ pytest_pytest_configurex = ["py.typed"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py38"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = [
