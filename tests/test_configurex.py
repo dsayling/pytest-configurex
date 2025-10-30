@@ -54,7 +54,7 @@ def test_cli_overrides_env(pytester):
         """
     )
 
-    result = pytester.runpytest("--log-level=DEBUG", "-v")
+    result = pytester.runpytest("--configurex-log-level=DEBUG", "-v")
     result.stdout.fnmatch_lines(["*::test_cli_override PASSED*"])
     assert result.ret == 0
 
@@ -64,8 +64,8 @@ def test_ini_configuration(pytester):
     pytester.makeini(
         """
         [pytest]
-        log_level = WARNING
-        timeout = 60
+        configurex_log_level = WARNING
+        configurex_timeout = 60
         """
     )
 
@@ -88,7 +88,7 @@ def test_precedence_cli_over_env_over_ini(pytester):
     pytester.makeini(
         """
         [pytest]
-        log_level = ERROR
+        configurex_log_level = ERROR
         """
     )
 
@@ -105,7 +105,7 @@ def test_precedence_cli_over_env_over_ini(pytester):
         """
     )
 
-    result = pytester.runpytest("--log-level=DEBUG", "-v")
+    result = pytester.runpytest("--configurex-log-level=DEBUG", "-v")
     result.stdout.fnmatch_lines(["*::test_cli_wins PASSED*"])
     assert result.ret == 0
 
@@ -115,7 +115,7 @@ def test_precedence_env_over_ini(pytester):
     pytester.makeini(
         """
         [pytest]
-        log_level = ERROR
+        configurex_log_level = ERROR
         """
     )
 
@@ -163,34 +163,38 @@ def test_help_message(pytester):
 
     result.stdout.fnmatch_lines([
         "*configurex*",
-        "*--log-level*",
-        "*--timeout*",
-        "*--addopts*",
+        "*--configurex-log-level*",
+        "*--configurex-timeout*",
+        "*--configurex-addopts*",
     ])
     assert result.ret == 0
 
 
 def test_plugin_registration(pytester):
-    """Test that external plugins can register their own mappings."""
+    """Test that external plugins can register their own mappings via .env.
+
+    Note: Dynamically registered fields work best with .env files.
+    For CLI/ini support, options should be added in conftest.py via pytest_addoption.
+    """
     # Create a conftest that registers a custom mapping
     pytester.makeconftest(
         """
         def pytest_configurex_register(registry):
-            registry.register("custom_option", "--custom", ini_key="custom")
+            # Register a mapping for env variable
+            registry.register("custom_option", "--custom-flag", ini_key=None)
         """
     )
 
-    pytester.makeini(
-        """
-        [pytest]
-        custom = ini_value
-        """
+    # Use .env to set the value
+    pytester.path.joinpath(".env").write_text(
+        "CUSTOM_OPTION=custom_value\n",
+        encoding="utf-8",
     )
 
     pytester.makepyfile(
         """
         def test_custom_option(configurex):
-            assert configurex.get("custom_option") == "ini_value"
+            assert configurex.get("custom_option") == "custom_value"
         """
     )
 

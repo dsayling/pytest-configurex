@@ -17,7 +17,8 @@ def pytest_addoption(parser):
     """Add command-line options and ini settings for all registered fields."""
     group = parser.getgroup("configurex", "pytest-configurex configuration")
 
-    # Add options for all registered fields
+    # Add options for built-in registered fields only
+    # Dynamic plugin registrations will be handled via pytest_configure
     for field, meta in registry.items():
         cli_flag = meta["cli"]
         ini_key = meta["ini"]
@@ -28,20 +29,28 @@ def pytest_addoption(parser):
             help_text += f" (ini: {ini_key})"
 
         # Add CLI option
-        group.addoption(
-            cli_flag,
-            action="store",
-            dest=cli_flag.lstrip("-").replace("-", "_"),
-            help=help_text,
-        )
+        try:
+            group.addoption(
+                cli_flag,
+                action="store",
+                dest=cli_flag.lstrip("-").replace("-", "_"),
+                help=help_text,
+            )
+        except (ValueError, AttributeError):
+            # Option might already exist, skip
+            pass
 
         # Add ini setting if specified
         if ini_key:
-            parser.addini(
-                ini_key,
-                help=help_text,
-                type="string",
-            )
+            try:
+                parser.addini(
+                    ini_key,
+                    help=help_text,
+                    type="string",
+                )
+            except (ValueError, AttributeError):
+                # ini option might already exist, skip
+                pass
 
 
 def pytest_configure(config):

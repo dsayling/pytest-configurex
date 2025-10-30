@@ -9,7 +9,7 @@ name = "pytest-configurex"
 description = "a simple envvar way of managing pytest execution"
 version = "0.0.1"
 readme = "README.rst"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [
     { name = "Drew Ayling", email = "drew@ayling.fyi" },
 ]
@@ -24,7 +24,6 @@ classifiers = [
     "Topic :: Software Development :: Testing",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

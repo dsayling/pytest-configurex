@@ -3,7 +3,7 @@
 This plugin provides:
 - Loading of .env files with typed models via pydantic-settings
 - Merging with pytest CLI and ini values
-- Plugin registration system for custom mappings (.env ’ CLI/ini options)
+- Plugin registration system for custom mappings (.env -> CLI/ini options)
 """
 
 from .core import get_env_file_path, load_env, merge_layers

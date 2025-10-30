@@ -85,6 +85,7 @@ class ConfigurexRegistry:
 registry = ConfigurexRegistry()
 
 # Register built-in mappings
-registry.register("log_level", "--log-level", ini_key="log_level")
-registry.register("timeout", "--timeout", ini_key="timeout")
-registry.register("addopts", "--addopts", ini_key="addopts")
+# Note: We use configurex-specific option names to avoid conflicts with existing pytest options
+registry.register("log_level", "--configurex-log-level", ini_key="configurex_log_level")
+registry.register("timeout", "--configurex-timeout", ini_key="configurex_timeout")
+registry.register("addopts", "--configurex-addopts", ini_key="configurex_addopts")
