@@ -5,12 +5,11 @@ import importlib.util
 import inspect
 import sys
 from pathlib import Path
-from typing import Optional, Type
 
 from pytest_configurex.settings import PytestSettings
 
 
-def get_settings_class_from_ini(config) -> Optional[Type[PytestSettings]]:
+def get_settings_class_from_ini(config) -> type[PytestSettings] | None:
     """
     Get settings class from pytest.ini configuration.
 
@@ -80,7 +79,7 @@ def get_settings_class_from_ini(config) -> Optional[Type[PytestSettings]]:
         ) from e
 
 
-def discover_settings_class(config) -> Type[PytestSettings]:
+def discover_settings_class(config) -> type[PytestSettings]:
     """
     Discover custom PytestSettings class.
 
@@ -171,7 +170,7 @@ def discover_settings_class(config) -> Type[PytestSettings]:
 
 
 def load_settings_for_config(
-    config, settings_class: Optional[Type[PytestSettings]] = None
+    config, settings_class: type[PytestSettings] | None = None
 ) -> PytestSettings:
     """
     Load settings instance for pytest config.

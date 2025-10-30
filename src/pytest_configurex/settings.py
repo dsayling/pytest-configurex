@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from dotenv import dotenv_values
 from pydantic import Field
@@ -28,7 +28,7 @@ class PytestSettings(BaseSettings):
     )
 
     # Logging configuration
-    log_level: Optional[str] = Field(
+    log_level: str | None = Field(
         default=None,
         description="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). "
         "Maps to --log-cli-level and --log-file-level.",
@@ -39,13 +39,13 @@ class PytestSettings(BaseSettings):
         description="Enable live logging to console. Maps to --log-cli.",
     )
 
-    log_file: Optional[str] = Field(
+    log_file: str | None = Field(
         default=None,
         description="Path to log file. Maps to --log-file.",
     )
 
     # Test selection
-    markers: Optional[str] = Field(
+    markers: str | None = Field(
         default=None,
         description="Marker expression to filter tests. Maps to -m.",
     )
@@ -61,13 +61,13 @@ class PytestSettings(BaseSettings):
         description="Coverage source path. Used with --cov.",
     )
 
-    coverage_report: Optional[str] = Field(
+    coverage_report: str | None = Field(
         default=None,
         description="Coverage report type (term, term-missing, html, xml). Maps to --cov-report.",
     )
 
     # xdist options (pytest-xdist)
-    xdist_numprocesses: Optional[int] = Field(
+    xdist_numprocesses: int | None = Field(
         default=None,
         ge=1,
         description="Number of parallel processes. Maps to -n.",
@@ -87,7 +87,7 @@ class PytestSettings(BaseSettings):
     )
 
     @classmethod
-    def load_settings(cls, config_root: Optional[Path] = None) -> "PytestSettings":
+    def load_settings(cls, config_root: Path | None = None) -> "PytestSettings":
         """
         Load settings with proper .env file fallback.
 
