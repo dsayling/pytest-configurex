@@ -48,14 +48,14 @@ dev = [
 [project.urls]
 Repository = "https://github.com/dsayling/pytest-configurex"
 [project.entry-points.pytest11]
-configurex = "pytest_pytest_configurex.plugin"
+configurex = "pytest_configurex.plugin"
 
 [tool.setuptools]
-packages = ["pytest_pytest_configurex"]
+packages = ["pytest_configurex"]
 package-dir = {"" = "src"}
 
 [tool.setuptools.package-data]
-pytest_pytest_configurex = ["py.typed"]
+pytest_configurex = ["py.typed"]
 
 [tool.ruff]
 line-length = 100

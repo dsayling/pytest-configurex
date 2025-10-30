@@ -103,7 +103,7 @@ Create a custom settings class in your `conftest.py` to add your own fields:
 
 ```python
 # conftest.py
-from pytest_pytest_configurex import PytestSettings
+from pytest_configurex import PytestSettings
 
 class MyProjectSettings(PytestSettings):
     """Custom settings for my project."""

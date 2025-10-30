@@ -2,7 +2,7 @@
 
 import pytest
 
-from pytest_pytest_configurex.discovery import load_settings_for_config
+from pytest_configurex.discovery import load_settings_for_config
 
 
 def pytest_addoption(parser):

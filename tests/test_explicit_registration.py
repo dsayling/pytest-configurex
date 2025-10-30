@@ -8,7 +8,7 @@ def test_explicit_registration_via_ini(pytester):
     # Create a settings module
     pytester.makepyfile(
         my_settings="""
-        from pytest_pytest_configurex import PytestSettings
+        from pytest_configurex import PytestSettings
 
         class MyTestSettings(PytestSettings):
             custom_value: str = "from_explicit_registration"
@@ -42,7 +42,7 @@ def test_explicit_registration_overrides_autodiscovery(pytester):
     # Create settings module for explicit registration
     pytester.makepyfile(
         explicit_settings="""
-        from pytest_pytest_configurex import PytestSettings
+        from pytest_configurex import PytestSettings
 
         class ExplicitSettings(PytestSettings):
             source: str = "explicit"
@@ -52,7 +52,7 @@ def test_explicit_registration_overrides_autodiscovery(pytester):
     # Create conftest.py with a different settings class (would be auto-discovered)
     pytester.makeconftest(
         """
-        from pytest_pytest_configurex import PytestSettings
+        from pytest_configurex import PytestSettings
 
         class AutoDiscoveredSettings(PytestSettings):
             source: str = "autodiscovery"
@@ -85,7 +85,7 @@ def test_explicit_registration_with_colon_syntax(pytester):
     """Test that module:ClassName syntax works."""
     pytester.makepyfile(
         test_settings="""
-        from pytest_pytest_configurex import PytestSettings
+        from pytest_configurex import PytestSettings
 
         class ColonSyntaxSettings(PytestSettings):
             syntax_type: str = "colon"
@@ -115,7 +115,7 @@ def test_explicit_registration_with_env_vars(pytester):
     """Test that explicit registration works with environment variables."""
     pytester.makepyfile(
         env_settings="""
-        from pytest_pytest_configurex import PytestSettings
+        from pytest_configurex import PytestSettings
 
         class EnvSettings(PytestSettings):
             custom_field: str = "default"
@@ -209,7 +209,7 @@ def test_explicit_registration_with_cli_override(pytester):
     """Test that CLI arguments override explicit registration settings."""
     pytester.makepyfile(
         cli_settings="""
-        from pytest_pytest_configurex import PytestSettings
+        from pytest_configurex import PytestSettings
 
         class CliSettings(PytestSettings):
             pass
@@ -246,7 +246,7 @@ def test_no_explicit_registration_uses_autodiscovery(pytester):
 
     pytester.makeconftest(
         """
-        from pytest_pytest_configurex import PytestSettings
+        from pytest_configurex import PytestSettings
 
         class AutoSettings(PytestSettings):
             auto_field: str = "autodiscovered"
@@ -276,7 +276,7 @@ def test_empty_ini_value_uses_autodiscovery(pytester):
 
     pytester.makeconftest(
         """
-        from pytest_pytest_configurex import PytestSettings
+        from pytest_configurex import PytestSettings
 
         class FallbackSettings(PytestSettings):
             fallback_field: str = "used"
@@ -302,7 +302,7 @@ def test_explicit_registration_from_package(pytester):
     pytester.makepyfile(
         **{
             "mypackage/settings": """
-        from pytest_pytest_configurex import PytestSettings
+        from pytest_configurex import PytestSettings
 
         class PackageSettings(PytestSettings):
             package_field: str = "from_package"
