@@ -35,21 +35,26 @@ jobs:
 
       - name: Run ${{ matrix.test-type }} tests
         run: |
-          # Use CLI args for explicit control (faster than file copy)
+          # Option 1: Use environment variables (recommended)
+          export X_VERBOSITY=1
+          export X_COVERAGE_ENABLED=true
+          export X_COVERAGE_REPORT=xml
+
           if [ "${{ matrix.test-type }}" == "unit" ]; then
-            uv run pytest \
-              --configurex-verbosity=1 \
-              --configurex-markers="unit and not slow" \
-              --configurex-coverage \
-              --configurex-coverage-report=xml \
-              --configurex-xdist-n=auto
+            export X_XDIST_NUMPROCESSES=auto
+            # Run tests from unit directory or use pytest -k pattern
+            uv run pytest tests/unit/
           else
-            uv run pytest \
-              --configurex-verbosity=1 \
-              --configurex-markers="integration" \
-              --configurex-coverage \
-              --configurex-coverage-report=xml
+            # Run tests from integration directory
+            uv run pytest tests/integration/
           fi
+
+          # Option 2: Use markers (requires tests to be marked!)
+          # if [ "${{ matrix.test-type }}" == "unit" ]; then
+          #   uv run pytest -m "unit and not slow"
+          # else
+          #   uv run pytest -m "integration"
+          # fi
         shell: bash
 
       - name: Upload coverage

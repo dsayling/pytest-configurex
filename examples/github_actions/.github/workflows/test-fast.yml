@@ -30,12 +30,16 @@ jobs:
         run: |
           # Configure via environment variables (fastest)
           export X_VERBOSITY=1
-          export X_MARKERS="unit and not slow"
           export X_COVERAGE_ENABLED=true
           export X_COVERAGE_SOURCE=src
           export X_COVERAGE_REPORT=xml
           export X_XDIST_NUMPROCESSES=auto
+          # Run all tests (or specify a directory like tests/unit/)
           uv run pytest
+
+          # To filter by markers, ensure tests are marked first:
+          # export X_MARKERS="unit and not slow"
+          # Then run: uv run pytest
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
