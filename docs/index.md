@@ -119,11 +119,11 @@ X_XDIST_DIST=loadscope      # Distribution mode
 
 Settings are applied in the following order (highest to lowest priority):
 
-1. **CLI arguments** - e.g., `--configurex-verbosity=3`
+1. **Standard pytest CLI arguments** - e.g., `-vv`, `--log-level=DEBUG`, `-m unit`
 2. **`.env.pytest` file** or **custom Settings class**
 3. **Default values**
 
-This means you can override file-based settings with CLI arguments for one-off test runs.
+This means you can override file-based settings with standard pytest CLI options for one-off test runs.
 
 ---
 
@@ -197,7 +197,6 @@ The [examples directory](https://github.com/dsayling/pytest-configurex/tree/main
 For comprehensive documentation and advanced usage:
 
 - **[USAGE.md](https://github.com/dsayling/pytest-configurex/blob/main/USAGE.md)** - Complete usage guide with all features
-- **[CHANGELOG.md](https://github.com/dsayling/pytest-configurex/blob/main/CHANGELOG.md)** - Version history and release notes
 - **[README.md](https://github.com/dsayling/pytest-configurex/blob/main/README.md)** - Package overview
 
 ---

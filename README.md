@@ -17,9 +17,10 @@ This [pytest](https://github.com/pytest-dev/pytest) plugin was generated with [C
 - **Pytest integration**: Automatically applies settings to pytest configuration
 - **Custom settings**: Extend `PytestSettings` to add your own configuration fields
 - **Fixture access**: Access settings in tests via the `configurex` fixture
-- **Priority-based**: CLI args override .env files, which override defaults
+- **Priority-based**: Standard pytest CLI args override .env files, which override defaults
 - **Flexible discovery**: Searches for `.env.pytest`, then `.env`, then environment variables
 - **Built-in support**: Verbosity, logging, markers, coverage (pytest-cov), and parallel execution (pytest-xdist)
+- **No custom CLI**: Uses standard pytest options (`-vv`, `--log-level`, `-m`, etc.) - no new options to learn
 
 ## Requirements
 
@@ -40,7 +41,7 @@ pip install pytest-configurex
 
 Quick start:
 
-1. Create a `.env.pytest` file:
+1. Create a `.env.pytest` file with default settings:
 
 ```bash
 X_VERBOSITY=2
@@ -48,19 +49,29 @@ X_LOG_LEVEL=INFO
 X_MARKERS=not slow
 ```
 
-2. Run pytest - settings are automatically loaded:
+2. Run pytest - settings are automatically applied:
 
 ```bash
-pytest
+pytest  # Uses settings from .env.pytest
 ```
 
-3. Access settings in your tests:
+3. Override settings with standard pytest CLI options:
+
+```bash
+pytest -vv                    # Override verbosity
+pytest --log-level=DEBUG      # Override log level
+pytest -m unit                # Override markers
+```
+
+4. Access settings in your tests:
 
 ```python
 def test_something(configurex):
     assert configurex.verbosity == 2
     assert configurex.log_level == "INFO"
 ```
+
+**Priority order:** Standard pytest CLI > `.env.pytest` > defaults
 
 For detailed documentation and advanced usage, see [USAGE.md](https://github.com/dsayling/pytest-configurex/blob/main/USAGE.md).
 

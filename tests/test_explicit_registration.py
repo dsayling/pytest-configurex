@@ -206,7 +206,7 @@ def test_explicit_registration_not_a_subclass(pytester):
 
 
 def test_explicit_registration_with_cli_override(pytester):
-    """Test that CLI arguments override explicit registration settings."""
+    """Test that standard pytest CLI arguments override explicit registration settings."""
     pytester.makepyfile(
         cli_settings="""
         from pytest_configurex import PytestSettings
@@ -229,13 +229,15 @@ def test_explicit_registration_with_cli_override(pytester):
 
     pytester.makepyfile(
         """
-        def test_cli_override(configurex):
-            # CLI should override env file
-            assert configurex.verbosity == 2
+        def test_cli_override(configurex, request):
+            # Standard CLI -vv should override X_VERBOSITY=1
+            assert request.config.option.verbose == 2
+            # Settings object still has original .env value
+            assert configurex.verbosity == 1
     """
     )
 
-    result = pytester.runpytest("--configurex-verbosity=2", "-v")
+    result = pytester.runpytest("-vv")
     result.stdout.fnmatch_lines(["*::test_cli_override PASSED*"])
     assert result.ret == 0
 

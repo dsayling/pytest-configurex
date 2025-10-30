@@ -4,16 +4,12 @@ import textwrap
 
 
 def test_help_message(pytester):
-    """Test that configurex options appear in help."""
+    """Test that custom configurex CLI options do NOT appear (we use standard pytest options)."""
     result = pytester.runpytest("--help")
-    result.stdout.fnmatch_lines(
-        [
-            "*configurex*",
-            "*--configurex-verbosity*",
-            "*--configurex-log-level*",
-            "*--configurex-markers*",
-        ]
-    )
+    # Should not have custom --configurex-* options anymore
+    assert "--configurex-verbosity" not in result.stdout.str()
+    assert "--configurex-log-level" not in result.stdout.str()
+    assert "--configurex-markers" not in result.stdout.str()
 
 
 def test_configurex_fixture_available(pytester):
@@ -85,27 +81,29 @@ def test_env_fallback(pytester):
     assert result.ret == 0
 
 
-def test_cli_overrides_env(pytester):
-    """Test that CLI options override .env.pytest settings."""
+def test_standard_pytest_cli_overrides_env(pytester):
+    """Test that standard pytest CLI options override .env.pytest settings."""
     env_file = pytester.path / ".env.pytest"
     env_file.write_text(
         textwrap.dedent(
             """
         X_VERBOSITY=1
-        X_LOG_LEVEL=DEBUG
+        X_LOG_LEVEL=INFO
         """
         ).strip()
     )
 
     pytester.makepyfile(
         """
-        def test_cli_override(configurex):
-            assert configurex.verbosity == 3
-            assert configurex.log_level == "ERROR"
+        def test_cli_override(configurex, request):
+            # Verbosity from CLI (-vv) should override X_VERBOSITY=1
+            assert request.config.option.verbose == 2
+            # .env setting should still be visible in configurex
+            assert configurex.verbosity == 1  # Original .env value
     """
     )
 
-    result = pytester.runpytest("--configurex-verbosity=3", "--configurex-log-level=ERROR", "-v")
+    result = pytester.runpytest("-vv")
     result.stdout.fnmatch_lines(["*::test_cli_override PASSED*"])
     assert result.ret == 0
 
@@ -324,13 +322,13 @@ X_XDIST_NUMPROCESSES=4
     assert result.ret == 0
 
 
-def test_get_cli_args(pytester):
-    """Test the get_cli_args method."""
+def test_standard_pytest_cli_options(pytester):
+    """Test that standard pytest CLI options work correctly."""
     env_file = pytester.path / ".env.pytest"
     env_file.write_text(
         textwrap.dedent(
             """
-        X_VERBOSITY=2
+        X_VERBOSITY=1
         X_LOG_LEVEL=INFO
         """
         ).strip()
@@ -338,38 +336,14 @@ def test_get_cli_args(pytester):
 
     pytester.makepyfile(
         """
-        def test_get_cli_args(configurex):
-            args = configurex.get_cli_args()
-            assert "-vv" in args
-            assert "--log-cli-level=INFO" in args
+        def test_standard_cli(request):
+            # Standard pytest -vvv should set verbosity to 3
+            assert request.config.option.verbose == 3
     """
     )
 
-    result = pytester.runpytest("-v")
-    result.stdout.fnmatch_lines(["*::test_get_cli_args PASSED*"])
-    assert result.ret == 0
-
-
-def test_multiple_cli_options(pytester):
-    """Test multiple CLI options together."""
-    pytester.makepyfile(
-        """
-        def test_multiple_cli(configurex):
-            assert configurex.verbosity == 3
-            assert configurex.log_level == "DEBUG"
-            assert configurex.log_cli is True
-            assert configurex.coverage_enabled is True
-    """
-    )
-
-    result = pytester.runpytest(
-        "--configurex-verbosity=3",
-        "--configurex-log-level=DEBUG",
-        "--configurex-log-cli",
-        "--configurex-coverage",
-        "-v",
-    )
-    result.stdout.fnmatch_lines(["*::test_multiple_cli PASSED*"])
+    result = pytester.runpytest("-vvv")
+    result.stdout.fnmatch_lines(["*::test_standard_cli PASSED*"])
     assert result.ret == 0
 
 
@@ -426,7 +400,7 @@ X_VERBOSITY=2
 
 
 def test_priority_system_complete(pytester):
-    """Test complete priority system: CLI > env > defaults."""
+    """Test complete priority system: standard pytest CLI > env > defaults."""
     # Set env value
     env_file = pytester.path / ".env.pytest"
     env_file.write_text(
@@ -441,19 +415,19 @@ def test_priority_system_complete(pytester):
 
     pytester.makepyfile(
         """
-        def test_priority(configurex):
-            # CLI overrides env for verbosity
-            assert configurex.verbosity == 3
-            # Env value for log_level (no CLI override)
+        def test_priority(configurex, request):
+            # Standard CLI -vvv should override X_VERBOSITY=1 in config
+            assert request.config.option.verbose == 3
+            # Env value for log_level (no CLI override) should apply
+            assert request.config.option.log_cli_level == "INFO"
+            # Settings object still has original .env values
+            assert configurex.verbosity == 1
             assert configurex.log_level == "INFO"
-            # Env value for log_cli (no CLI override)
             assert configurex.log_cli is True
-            # Default for markers (no env or CLI)
-            assert configurex.markers is None
     """
     )
 
-    result = pytester.runpytest("--configurex-verbosity=3", "-v")
+    result = pytester.runpytest("-vvv")
     result.stdout.fnmatch_lines(["*::test_priority PASSED*"])
     assert result.ret == 0
 
@@ -482,140 +456,63 @@ def test_log_file_setting(pytester):
     assert result.ret == 0
 
 
-def test_get_cli_args_comprehensive(pytester):
-    """Test get_cli_args with all options."""
+def test_standard_markers_cli_overrides_env(pytester):
+    """Test that standard -m CLI option overrides .env.pytest settings."""
     env_file = pytester.path / ".env.pytest"
-    env_file.write_text(
-        textwrap.dedent(
-            """
-        X_VERBOSITY=3
-        X_LOG_LEVEL=DEBUG
-        X_LOG_CLI=true
-        X_LOG_FILE=pytest.log
-        X_MARKERS=not slow
-        X_COVERAGE_ENABLED=true
-        X_COVERAGE_SOURCE=src
-        X_COVERAGE_REPORT=term-missing
-        X_XDIST_NUMPROCESSES=4
-        X_XDIST_DIST=loadscope
-        """
-        ).strip()
-    )
+    env_file.write_text("X_MARKERS=slow")
 
-    pytester.makepyfile(
-        """
-        def test_get_cli_args_all(configurex):
-            args = configurex.get_cli_args()
-            assert "-vvv" in args
-            assert "--log-cli-level=DEBUG" in args
-            assert "--log-file-level=DEBUG" in args
-            assert "--log-cli" in args
-            assert "--log-file=pytest.log" in args
-            assert "-m=not slow" in args
-            assert "--cov=src" in args
-            assert "--cov-report=term-missing" in args
-            assert "-n=4" in args
-            assert "--dist=loadscope" in args
-    """
-    )
-
-    result = pytester.runpytest("-v")
-    result.stdout.fnmatch_lines(["*::test_get_cli_args_all PASSED*"])
-    assert result.ret == 0
-
-
-def test_get_cli_args_minimal(pytester):
-    """Test get_cli_args with minimal/default settings."""
-    pytester.makepyfile(
-        """
-        def test_get_cli_args_minimal(configurex):
-            args = configurex.get_cli_args()
-            # With default settings, most args should not be present
-            assert "-v" not in args
-            # xdist_dist defaults to "load", which should not add --dist arg
-            assert all("--dist=" not in arg for arg in args)
-    """
-    )
-
-    result = pytester.runpytest("-v")
-    result.stdout.fnmatch_lines(["*::test_get_cli_args_minimal PASSED*"])
-    assert result.ret == 0
-
-
-def test_xdist_dist_default(pytester):
-    """Test that default xdist_dist value doesn't generate CLI arg."""
-    env_file = pytester.path / ".env.pytest"
-    env_file.write_text(
-        textwrap.dedent(
-            """
-        X_XDIST_NUMPROCESSES=2
-        """
-        ).strip()
-    )
-
-    pytester.makepyfile(
-        """
-        def test_xdist_default_dist(configurex):
-            args = configurex.get_cli_args()
-            # Should have -n but not --dist when dist is default "load"
-            assert "-n=2" in args
-            assert configurex.xdist_dist == "load"
-            # --dist=load should not be in args (it's the default)
-            assert all("--dist=" not in arg for arg in args)
-    """
-    )
-
-    result = pytester.runpytest("-v")
-    result.stdout.fnmatch_lines(["*::test_xdist_default_dist PASSED*"])
-    assert result.ret == 0
-
-
-def test_cli_markers_option(pytester):
-    """Test --configurex-markers CLI option."""
     pytester.makepyfile(
         """
         import pytest
 
         @pytest.mark.unit
-        def test_unit(configurex):
-            assert configurex.markers == "unit"
+        def test_unit():
+            pass
 
-        @pytest.mark.integration
-        def test_integration(configurex):
+        @pytest.mark.slow
+        def test_slow():
             assert False, "Should not run"
     """
     )
 
-    result = pytester.runpytest("--configurex-markers=unit", "-v")
+    result = pytester.runpytest("-m", "unit", "-v")
     result.stdout.fnmatch_lines(["*::test_unit PASSED*"])
-    assert "test_integration" not in result.stdout.str()
+    assert "test_slow" not in result.stdout.str()
     assert result.ret == 0
 
 
-def test_cli_log_file_option(pytester):
-    """Test --configurex-log-file CLI option."""
+def test_standard_log_file_cli_overrides_env(pytester):
+    """Test that standard --log-file CLI option overrides .env.pytest settings."""
+    env_file = pytester.path / ".env.pytest"
+    env_file.write_text("X_LOG_FILE=default.log")
+
     pytester.makepyfile(
         """
-        def test_log_file_cli(configurex):
-            assert configurex.log_file == "custom.log"
+        def test_log_file_cli(request):
+            # CLI --log-file should override X_LOG_FILE
+            assert request.config.option.log_file == "custom.log"
     """
     )
 
-    result = pytester.runpytest("--configurex-log-file=custom.log", "-v")
+    result = pytester.runpytest("--log-file=custom.log", "-v")
     result.stdout.fnmatch_lines(["*::test_log_file_cli PASSED*"])
     assert result.ret == 0
 
 
-def test_cli_coverage_report_option(pytester):
-    """Test --configurex-coverage-report CLI option."""
+def test_standard_cov_report_cli_overrides_env(pytester):
+    """Test that standard --cov-report CLI option overrides .env.pytest settings."""
+    env_file = pytester.path / ".env.pytest"
+    env_file.write_text("X_COVERAGE_REPORT=term")
+
     pytester.makepyfile(
         """
-        def test_coverage_report_cli(configurex):
-            assert configurex.coverage_report == "html"
+        def test_coverage_report_cli(request):
+            # CLI --cov-report should override X_COVERAGE_REPORT
+            assert "html" in request.config.option.cov_report
     """
     )
 
-    result = pytester.runpytest("--configurex-coverage-report=html", "-v")
+    result = pytester.runpytest("--cov-report=html", "-v")
     result.stdout.fnmatch_lines(["*::test_coverage_report_cli PASSED*"])
     assert result.ret == 0
 
@@ -660,9 +557,7 @@ def test_all_settings_fields_accessible(pytester):
             assert hasattr(configurex, 'xdist_dist')
 
             # Verify methods exist
-            assert hasattr(configurex, 'get_cli_args')
             assert hasattr(configurex, 'apply_to_pytest')
-            assert callable(configurex.get_cli_args)
             assert callable(configurex.apply_to_pytest)
     """
     )

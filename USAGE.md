@@ -31,7 +31,7 @@ pytest
 
 Settings are applied in the following order (highest to lowest):
 
-1. **CLI arguments** (e.g., `--configurex-verbosity=3`)
+1. **Standard pytest CLI arguments** (e.g., `-vv`, `--log-level=DEBUG`, `-m unit`)
 2. **`.env.pytest` file** or **custom Settings class**
 3. **Default values**
 
@@ -146,29 +146,35 @@ def test_api_call(configurex):
     assert configurex.enable_debug_mode is True
 ```
 
-## CLI Override Examples
+## Overriding Settings with Standard Pytest CLI
 
-Override any setting via CLI:
+You can override any .env setting using standard pytest CLI options:
 
 ```bash
-# Override verbosity
-pytest --configurex-verbosity=3
+# Override verbosity with standard pytest options
+pytest -vv              # Verbosity level 2
+pytest -vvv             # Verbosity level 3
 
-# Override log level
-pytest --configurex-log-level=DEBUG
+# Override log level with standard pytest options
+pytest --log-level=DEBUG
+pytest --log-cli-level=DEBUG
 
-# Override markers
-pytest --configurex-markers="slow and integration"
+# Override markers with standard pytest options
+pytest -m "slow and integration"
+pytest -m unit
 
 # Override multiple settings
-pytest --configurex-verbosity=2 --configurex-log-level=INFO --configurex-log-cli
+pytest -vv --log-level=INFO --log-cli
 
-# Enable coverage
-pytest --configurex-coverage --configurex-coverage-report=html
+# Enable coverage with pytest-cov options
+pytest --cov=src --cov-report=html
 
-# Run in parallel
-pytest --configurex-xdist-n=4
+# Run in parallel with pytest-xdist options
+pytest -n 4
+pytest -n auto --dist=loadscope
 ```
+
+**Note:** Standard pytest CLI options take priority over `.env.pytest` settings.
 
 ## Example Project Structure
 
@@ -215,7 +221,7 @@ X_MARKERS=not slow
 
 ### CI Environment
 ```bash
-pytest --configurex-verbosity=1 --configurex-coverage --configurex-coverage-report=xml
+pytest -v --cov=src --cov-report=xml
 ```
 
 ### Fast Test Run
@@ -227,5 +233,5 @@ X_XDIST_NUMPROCESSES=auto
 
 ### Debugging Specific Tests
 ```bash
-pytest --configurex-verbosity=3 --configurex-log-level=DEBUG tests/test_specific.py
+pytest -vvv --log-level=DEBUG tests/test_specific.py
 ```

@@ -151,104 +151,68 @@ class PytestSettings(BaseSettings):
 
     def apply_to_pytest(self, config: Any) -> None:
         """
-        Apply settings to pytest config object.
+        Apply settings to pytest config object, respecting CLI priority.
 
+        Standard pytest CLI options take precedence over .env settings.
         This method is called during pytest_configure hook.
         Override this in subclasses to customize behavior.
 
         Args:
             config: Pytest config object
         """
+        from pytest_configurex.cli_detection import has_cli_option
+
         # Store reference to settings in config for fixture access
         config._configurex_settings = self
 
-        # Apply verbosity
-        if self.verbosity > 0:
+        # Apply verbosity - only if not set via CLI (-v, -vv, -vvv, --verbose)
+        if self.verbosity > 0 and not has_cli_option(config, "-v", "-vv", "-vvv", "--verbose"):
             config.option.verbose = self.verbosity
 
-        # Apply logging settings
-        if self.log_level:
+        # Apply log level - only if not set via CLI
+        if self.log_level and not has_cli_option(
+            config, "--log-level", "--log-cli-level", "--log-file-level"
+        ):
             if hasattr(config.option, "log_cli_level"):
                 config.option.log_cli_level = self.log_level
             if hasattr(config.option, "log_file_level"):
                 config.option.log_file_level = self.log_level
 
-        if self.log_cli:
+        # Apply log CLI - only if not set via CLI
+        if self.log_cli and not has_cli_option(config, "--log-cli"):
             if hasattr(config.option, "log_cli"):
                 config.option.log_cli = True
 
-        if self.log_file:
+        # Apply log file - only if not set via CLI
+        if self.log_file and not has_cli_option(config, "--log-file"):
             if hasattr(config.option, "log_file"):
                 config.option.log_file = self.log_file
 
-        # Apply marker expression
-        if self.markers:
+        # Apply marker expression - only if not set via CLI
+        if self.markers and not has_cli_option(config, "-m", "--markers"):
             if hasattr(config.option, "markexpr"):
                 config.option.markexpr = self.markers
 
-        # Apply coverage settings
-        if self.coverage_enabled:
+        # Apply coverage settings - only if not set via CLI
+        if self.coverage_enabled and not has_cli_option(config, "--cov"):
             if hasattr(config.option, "cov_source"):
                 if not config.option.cov_source:
                     config.option.cov_source = [self.coverage_source]
 
-        if self.coverage_report:
+        # Apply coverage report - only if not set via CLI
+        if self.coverage_report and not has_cli_option(config, "--cov-report"):
             if hasattr(config.option, "cov_report"):
                 config.option.cov_report = {self.coverage_report: None}
 
-        # Apply xdist settings
-        if self.xdist_numprocesses:
+        # Apply xdist numprocesses - only if not set via CLI
+        if self.xdist_numprocesses and not has_cli_option(config, "-n", "--numprocesses"):
             if hasattr(config.option, "numprocesses"):
                 config.option.numprocesses = self.xdist_numprocesses
 
-        if hasattr(config.option, "dist"):
-            config.option.dist = self.xdist_dist
-
-    def get_cli_args(self) -> list[str]:
-        """
-        Generate equivalent CLI arguments from settings.
-
-        This is useful for debugging or generating command strings.
-
-        Returns:
-            List of CLI argument strings
-        """
-        args = []
-
-        # Verbosity
-        if self.verbosity > 0:
-            args.append("-" + "v" * self.verbosity)
-
-        # Logging
-        if self.log_level:
-            args.append(f"--log-cli-level={self.log_level}")
-            args.append(f"--log-file-level={self.log_level}")
-
-        if self.log_cli:
-            args.append("--log-cli")
-
-        if self.log_file:
-            args.append(f"--log-file={self.log_file}")
-
-        # Markers
-        if self.markers:
-            args.append(f"-m={self.markers}")
-
-        # Coverage
-        if self.coverage_enabled:
-            args.append(f"--cov={self.coverage_source}")
-
-        if self.coverage_report:
-            args.append(f"--cov-report={self.coverage_report}")
-
-        # xdist
-        if self.xdist_numprocesses:
-            args.append(f"-n={self.xdist_numprocesses}")
-
-        if hasattr(self, "xdist_dist") and self.xdist_dist != "load":
-            args.append(f"--dist={self.xdist_dist}")
-
-        return args
+        # Apply xdist dist - only if not set via CLI
+        if self.xdist_dist and not has_cli_option(config, "--dist"):
+            if hasattr(config.option, "dist"):
+                config.option.dist = self.xdist_dist
 
     def __repr__(self) -> str:
         """String representation showing key settings."""
