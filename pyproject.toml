@@ -6,9 +6,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pytest-configurex"
-description = "a .env pytest plugin built ontop of pydantic-settings"
+description = "Configure pytest with .env files and pydantic-settings for flexible, type-safe test configuration"
 version = "0.0.1"
-readme = "README.rst"
+readme = "README.md"
 requires-python = ">=3.10"
 authors = [
     { name = "Drew Ayling", email = "drew@ayling.fyi" },
@@ -46,7 +46,12 @@ dev = [
 ]
 
 [project.urls]
+Homepage = "https://github.com/dsayling/pytest-configurex"
 Repository = "https://github.com/dsayling/pytest-configurex"
+Documentation = "https://github.com/dsayling/pytest-configurex/blob/main/USAGE.md"
+"Bug Tracker" = "https://github.com/dsayling/pytest-configurex/issues"
+Changelog = "https://github.com/dsayling/pytest-configurex/blob/main/CHANGELOG.md"
+
 [project.entry-points.pytest11]
 configurex = "pytest_configurex.plugin"
 
