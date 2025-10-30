@@ -1,0 +1,214 @@
+# justfile for pytest-configurex
+# Install just: https://github.com/casey/just
+# Run with: just <recipe-name>
+
+# Default recipe (runs when you type 'just')
+default: test-unit
+
+# List all available recipes
+list:
+    @just --list
+
+# ============================================================================
+# Basic Test Recipes
+# ============================================================================
+
+# Run all tests (uses .env.pytest if present)
+test:
+    uv run pytest
+
+# Run unit tests only (fast feedback)
+test-unit:
+    #!/usr/bin/env bash
+    export X_MARKERS="unit and not slow"
+    export X_VERBOSITY=2
+    export X_XDIST_NUMPROCESSES=auto
+    uv run pytest
+
+# Run integration tests
+test-integration:
+    #!/usr/bin/env bash
+    export X_MARKERS="integration"
+    export X_VERBOSITY=1
+    uv run pytest
+
+# Run E2E tests
+test-e2e:
+    #!/usr/bin/env bash
+    export X_MARKERS="e2e"
+    export X_LOG_FILE="e2e.log"
+    uv run pytest
+
+# ============================================================================
+# Test with Coverage
+# ============================================================================
+
+# Run tests with coverage report
+test-cov:
+    #!/usr/bin/env bash
+    export X_COVERAGE_ENABLED=true
+    export X_COVERAGE_SOURCE=src
+    export X_COVERAGE_REPORT=term-missing
+    uv run pytest
+
+# Generate HTML coverage report
+test-cov-html:
+    #!/usr/bin/env bash
+    export X_COVERAGE_ENABLED=true
+    export X_COVERAGE_SOURCE=src
+    export X_COVERAGE_REPORT=html
+    uv run pytest
+    @echo "Coverage report: htmlcov/index.html"
+
+# ============================================================================
+# Environment-Based Testing
+# ============================================================================
+
+# Run tests in development mode
+test-dev:
+    cp .env.pytest.dev .env.pytest
+    uv run pytest
+
+# Run tests in staging mode
+test-staging:
+    cp .env.pytest.staging .env.pytest
+    uv run pytest
+
+# Run tests in production mode (smoke tests only)
+test-prod:
+    cp .env.pytest.production .env.pytest
+    uv run pytest
+
+# ============================================================================
+# Advanced Testing
+# ============================================================================
+
+# Run tests in parallel (fast)
+test-parallel cores="auto":
+    #!/usr/bin/env bash
+    export X_XDIST_NUMPROCESSES={{cores}}
+    export X_XDIST_DIST=loadscope
+    uv run pytest
+
+# Run tests in verbose mode (debugging)
+test-verbose:
+    #!/usr/bin/env bash
+    export X_VERBOSITY=3
+    export X_LOG_CLI=true
+    export X_LOG_LEVEL=DEBUG
+    uv run pytest
+
+# Run specific test file
+test-file path:
+    uv run pytest {{path}} -v
+
+# Run tests matching pattern
+test-pattern pattern:
+    uv run pytest -k "{{pattern}}" -v
+
+# ============================================================================
+# CI/CD Simulation
+# ============================================================================
+
+# Run all checks (like CI would)
+ci: lint test-unit test-integration
+    @echo "✅ All CI checks passed!"
+
+# Run full test suite (all test types)
+test-all: test-unit test-integration test-e2e
+    @echo "✅ All tests passed!"
+
+# ============================================================================
+# Code Quality
+# ============================================================================
+
+# Format code with ruff
+format:
+    uv run ruff format .
+
+# Lint code with ruff
+lint:
+    uv run ruff check .
+
+# Fix linting issues
+lint-fix:
+    uv run ruff check --fix .
+
+# Run both format and lint
+check: format lint
+    @echo "✅ Code quality checks passed!"
+
+# ============================================================================
+# Watch Mode
+# ============================================================================
+
+# Watch for changes and run tests (requires pytest-watch)
+watch:
+    #!/usr/bin/env bash
+    export X_MARKERS="unit and not slow"
+    export X_VERBOSITY=1
+    uv run ptw
+
+# ============================================================================
+# Benchmarking
+# ============================================================================
+
+# Run performance benchmarks
+benchmark iterations="10":
+    uv run python benchmarks/benchmark_startup.py --iterations={{iterations}}
+
+# Run benchmarks with verbose output
+benchmark-verbose iterations="10":
+    uv run python benchmarks/benchmark_startup.py --iterations={{iterations}} --verbose
+
+# ============================================================================
+# Cleanup
+# ============================================================================
+
+# Clean up test artifacts
+clean:
+    rm -rf .pytest_cache
+    rm -rf htmlcov
+    rm -rf .coverage
+    rm -f coverage.xml
+    rm -f e2e.log
+    @echo "✨ Cleaned test artifacts"
+
+# ============================================================================
+# Development Helpers
+# ============================================================================
+
+# Install dependencies
+install:
+    uv sync --all-extras
+
+# Update dependencies
+update:
+    uv lock --upgrade
+
+# Show current configurex settings
+show-config:
+    @echo "Current .env.pytest contents:"
+    @cat .env.pytest 2>/dev/null || echo "No .env.pytest file found"
+
+# Create .env.pytest from template
+init-config template="dev":
+    cp .env.pytest.{{template}} .env.pytest
+    @echo "Created .env.pytest from .env.pytest.{{template}}"
+
+# ============================================================================
+# Usage Examples
+# ============================================================================
+
+# Show usage examples
+help:
+    @echo "Common recipes:"
+    @echo ""
+    @echo "  just test-unit         # Fast unit tests"
+    @echo "  just test-cov          # Tests with coverage"
+    @echo "  just test-dev          # Development environment"
+    @echo "  just watch             # Watch mode for TDD"
+    @echo "  just ci                # Full CI simulation"
+    @echo "  just benchmark         # Run performance tests"
+    @echo ""
+    @echo "Run 'just list' to see all available recipes"

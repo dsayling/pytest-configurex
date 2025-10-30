@@ -1,5 +1,6 @@
 """Auto-discovery logic for custom PytestSettings classes."""
 
+import importlib
 import importlib.util
 import inspect
 import sys
@@ -9,17 +10,84 @@ from typing import Optional, Type
 from pytest_pytest_configurex.settings import PytestSettings
 
 
+def get_settings_class_from_ini(config) -> Optional[Type[PytestSettings]]:
+    """
+    Get settings class from pytest.ini configuration.
+
+    Checks for 'configurex_settings_class' option in pytest.ini.
+    If found, imports and returns the specified class.
+
+    Args:
+        config: Pytest config object
+
+    Returns:
+        Type[PytestSettings] or None if not configured
+
+    Raises:
+        ImportError: If the specified class cannot be imported
+        AttributeError: If the specified class path is invalid
+    """
+    # Get the configurex_settings_class from pytest.ini
+    class_path = config.getini("configurex_settings_class")
+
+    if not class_path:
+        return None
+
+    # Parse the class path (e.g., "myapp.settings.MySettings")
+    try:
+        if ":" in class_path:
+            # Support both "module.path:ClassName" and "module.path.ClassName"
+            module_path, class_name = class_path.rsplit(":", 1)
+        elif "." in class_path:
+            # Assume last part is the class name
+            module_path, class_name = class_path.rsplit(".", 1)
+        else:
+            raise ValueError(
+                f"Invalid class path format: {class_path}. "
+                f"Expected 'module.path.ClassName' or 'module.path:ClassName'"
+            )
+
+        # Add the pytest rootdir to sys.path if not already there
+        # This allows importing test modules
+        rootdir = str(config.rootdir)
+        if rootdir not in sys.path:
+            sys.path.insert(0, rootdir)
+
+        try:
+            # Import the module
+            module = importlib.import_module(module_path)
+        finally:
+            # Clean up sys.path if we added it
+            if rootdir in sys.path and sys.path[0] == rootdir:
+                sys.path.remove(rootdir)
+
+        # Get the class from the module
+        settings_class = getattr(module, class_name)
+
+        # Verify it's a subclass of PytestSettings
+        if not issubclass(settings_class, PytestSettings):
+            raise TypeError(
+                f"Class {class_path} is not a subclass of PytestSettings. "
+                f"Please ensure your custom settings class inherits from PytestSettings."
+            )
+
+        return settings_class
+
+    except (ImportError, AttributeError, ValueError, TypeError) as e:
+        # Re-raise with more context
+        raise ImportError(
+            f"Failed to import settings class from pytest.ini: {class_path}. Error: {e}"
+        ) from e
+
+
 def discover_settings_class(config) -> Type[PytestSettings]:
     """
-    Auto-discover custom PytestSettings class from conftest.py.
-
-    Searches for a subclass of PytestSettings in the conftest.py file
-    located in the pytest root directory.
+    Discover custom PytestSettings class.
 
     Priority:
-    1. Look for any class that subclasses PytestSettings (excluding PytestSettings itself)
-    2. If multiple found, use the first one discovered
-    3. If none found, return the default PytestSettings class
+    1. Check pytest.ini for 'configurex_settings_class' (explicit registration)
+    2. Auto-discover from conftest.py (looks for PytestSettings subclass)
+    3. Return default PytestSettings class
 
     Args:
         config: Pytest config object
@@ -27,7 +95,20 @@ def discover_settings_class(config) -> Type[PytestSettings]:
     Returns:
         Type[PytestSettings]: Custom settings class or default PytestSettings
     """
-    # Get the pytest root directory
+    # PRIORITY 1: Check pytest.ini for explicit registration
+    try:
+        ini_class = get_settings_class_from_ini(config)
+        if ini_class is not None:
+            # Explicit registration found - skip auto-discovery
+            return ini_class
+    except ImportError as e:
+        # Log error but continue to auto-discovery fallback
+        if hasattr(config, "warn"):
+            config.warn("C1", str(e))
+        # Could optionally fail hard here, but let's try auto-discovery as fallback
+        pass
+
+    # PRIORITY 2: Auto-discover from conftest.py
     rootdir = Path(config.rootdir)
     conftest_path = rootdir / "conftest.py"
 

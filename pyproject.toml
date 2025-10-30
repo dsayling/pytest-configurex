@@ -85,3 +85,6 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+
+# pytest-configurex options
+# configurex_settings_class = "myapp.settings.MySettings"  # Optional: explicit registration
