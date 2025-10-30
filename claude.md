@@ -53,7 +53,7 @@ uv run pytest -v
 
 ### Run Tests with Coverage
 ```bash
-uv run pytest --cov=pytest_pytest_configurex --cov-report=term-missing
+uv run pytest --cov=pytest_configurex --cov-report=term-missing
 ```
 
 ### Run Specific Test
@@ -66,7 +66,7 @@ uv run pytest tests/test_pytest_configurex.py::test_name -v
 ```
 pytest-configurex/
 ├── src/
-│   └── pytest_pytest_configurex/
+│   └── pytest_configurex/
 │       ├── __init__.py
 │       ├── plugin.py          # Main plugin hooks
 │       ├── settings.py        # Pydantic settings classes
@@ -149,7 +149,7 @@ uv run pytest
 The plugin is registered via `pyproject.toml`:
 ```toml
 [project.entry-points.pytest11]
-configurex = "pytest_pytest_configurex.plugin"
+configurex = "pytest_configurex.plugin"
 ```
 
 ## Common Commands
@@ -168,7 +168,7 @@ uv run ruff check --fix .
 uv run pytest -v
 
 # Run tests with coverage
-uv run pytest --cov=pytest_pytest_configurex
+uv run pytest --cov=pytest_configurex
 
 # Build package
 uv build

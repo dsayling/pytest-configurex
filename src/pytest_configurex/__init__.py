@@ -30,7 +30,7 @@ Advanced usage:
             assert configurex.verbosity == 2
 """
 
-from pytest_pytest_configurex.settings import PytestSettings
+from pytest_configurex.settings import PytestSettings
 
 __version__ = "0.0.1"
 __all__ = ["PytestSettings"]

@@ -133,7 +133,7 @@ def test_custom_settings_class_discovery(pytester):
     # Create conftest.py with custom settings class
     pytester.makeconftest(
         """
-        from pytest_pytest_configurex import PytestSettings
+        from pytest_configurex import PytestSettings
 
         class CustomSettings(PytestSettings):
             custom_field: str = "custom_value"
@@ -161,7 +161,7 @@ def test_custom_settings_with_env(pytester):
     """Test custom settings class with .env.pytest file."""
     pytester.makeconftest(
         """
-        from pytest_pytest_configurex import PytestSettings
+        from pytest_configurex import PytestSettings
 
         class CustomSettings(PytestSettings):
             custom_field: str = "default"

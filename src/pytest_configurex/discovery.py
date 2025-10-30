@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Optional, Type
 
-from pytest_pytest_configurex.settings import PytestSettings
+from pytest_configurex.settings import PytestSettings
 
 
 def get_settings_class_from_ini(config) -> Optional[Type[PytestSettings]]:
