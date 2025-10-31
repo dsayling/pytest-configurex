@@ -20,9 +20,7 @@ def has_cli_option(config: Any, *patterns: str) -> bool:
         >>> has_cli_option(config, '-m', '--markers')
     """
     args = config.invocation_params.args
-    for arg in args:
-        for pattern in patterns:
-            # Match exact arg or arg with = value
-            if arg == pattern or arg.startswith(pattern + "="):
-                return True
-    return False
+    pattern_set = set(patterns)
+    pattern_prefixes = tuple(pattern + "=" for pattern in patterns)
+
+    return any(arg in pattern_set or arg.startswith(pattern_prefixes) for arg in args)

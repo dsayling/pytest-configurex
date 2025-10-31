@@ -84,7 +84,7 @@ def test_explicit_registration_overrides_autodiscovery(pytester):
 def test_explicit_registration_with_colon_syntax(pytester):
     """Test that module:ClassName syntax works."""
     pytester.makepyfile(
-        test_settings="""
+        colon_settings="""
         from pytest_configurex import PytestSettings
 
         class ColonSyntaxSettings(PytestSettings):
@@ -95,7 +95,7 @@ def test_explicit_registration_with_colon_syntax(pytester):
     pytester.makeini(
         """
         [pytest]
-        configurex_settings_class = test_settings:ColonSyntaxSettings
+        configurex_settings_class = colon_settings:ColonSyntaxSettings
     """
     )
 

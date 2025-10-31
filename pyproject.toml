@@ -74,11 +74,15 @@ select = [
     "I",  # isort
     "B",  # flake8-bugbear
     "C4", # flake8-comprehensions
+    "C90", # mccabe complexity
     "UP", # pyupgrade
 ]
 ignore = [
     "E501", # line too long (handled by formatter)
 ]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
 
 [tool.ruff.format]
 quote-style = "double"

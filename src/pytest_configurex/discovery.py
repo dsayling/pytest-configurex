@@ -79,6 +79,97 @@ def get_settings_class_from_ini(config) -> type[PytestSettings] | None:
         ) from e
 
 
+def _load_conftest_module(conftest_path: Path):
+    """
+    Load conftest.py as a module.
+
+    Args:
+        conftest_path: Path to conftest.py file
+
+    Returns:
+        Loaded module or None if loading fails
+
+    Raises:
+        ImportError: If module spec cannot be created or module cannot be loaded
+    """
+    spec = importlib.util.spec_from_file_location("conftest", conftest_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not create module spec for {conftest_path}")
+
+    conftest_module = importlib.util.module_from_spec(spec)
+
+    # Temporarily add to sys.modules to handle relative imports
+    sys.modules["conftest"] = conftest_module
+
+    try:
+        try:
+            spec.loader.exec_module(conftest_module)
+            return conftest_module
+        except (SyntaxError, FileNotFoundError) as e:
+            raise ImportError(f"Failed to load module from {conftest_path}: {e}") from e
+    finally:
+        # Clean up sys.modules
+        if "conftest" in sys.modules:
+            del sys.modules["conftest"]
+
+
+def _find_settings_subclasses(module) -> list[type[PytestSettings]]:
+    """
+    Find all PytestSettings subclasses defined in the given module.
+
+    Args:
+        module: Python module to search
+
+    Returns:
+        List of PytestSettings subclasses found in the module
+    """
+    custom_classes = []
+    for _name, obj in inspect.getmembers(module, inspect.isclass):
+        # Check if it's a subclass of PytestSettings but not PytestSettings itself
+        if (
+            issubclass(obj, PytestSettings)
+            and obj is not PytestSettings
+            and obj.__module__ == module.__name__  # Ensure it's defined in module, not imported
+        ):
+            custom_classes.append(obj)
+    return custom_classes
+
+
+def _autodiscover_from_conftest(config) -> type[PytestSettings] | None:
+    """
+    Auto-discover PytestSettings subclass from conftest.py.
+
+    Args:
+        config: Pytest config object
+
+    Returns:
+        First PytestSettings subclass found, or None if not found or on error
+    """
+    rootdir = Path(config.rootdir)
+    conftest_path = rootdir / "conftest.py"
+
+    # If conftest.py doesn't exist, return None
+    if not conftest_path.exists():
+        return None
+
+    try:
+        conftest_module = _load_conftest_module(conftest_path)
+        custom_classes = _find_settings_subclasses(conftest_module)
+
+        # Return the first custom class if found
+        return custom_classes[0] if custom_classes else None
+
+    except Exception as e:
+        # If anything goes wrong, log the error and return None
+        if hasattr(config, "warn"):
+            config.warn(
+                "C1",
+                f"Failed to discover custom PytestSettings class from conftest.py: {e}",
+                fslocation=str(conftest_path),
+            )
+        return None
+
+
 def discover_settings_class(config) -> type[PytestSettings]:
     """
     Discover custom PytestSettings class.
@@ -98,75 +189,19 @@ def discover_settings_class(config) -> type[PytestSettings]:
     try:
         ini_class = get_settings_class_from_ini(config)
         if ini_class is not None:
-            # Explicit registration found - skip auto-discovery
             return ini_class
     except ImportError as e:
         # Log error but continue to auto-discovery fallback
         if hasattr(config, "warn"):
             config.warn("C1", str(e))
-        # Could optionally fail hard here, but let's try auto-discovery as fallback
-        pass
 
     # PRIORITY 2: Auto-discover from conftest.py
-    rootdir = Path(config.rootdir)
-    conftest_path = rootdir / "conftest.py"
+    discovered_class = _autodiscover_from_conftest(config)
+    if discovered_class is not None:
+        return discovered_class
 
-    # If conftest.py doesn't exist, return default
-    if not conftest_path.exists():
-        return PytestSettings
-
-    try:
-        # Load conftest.py as a module
-        spec = importlib.util.spec_from_file_location("conftest", conftest_path)
-        if spec is None or spec.loader is None:
-            return PytestSettings
-
-        conftest_module = importlib.util.module_from_spec(spec)
-
-        # Temporarily add to sys.modules to handle relative imports
-        sys.modules["conftest"] = conftest_module
-
-        try:
-            spec.loader.exec_module(conftest_module)
-        finally:
-            # Clean up sys.modules
-            if "conftest" in sys.modules:
-                del sys.modules["conftest"]
-
-        # Search for PytestSettings subclasses
-        custom_classes = []
-        for _name, obj in inspect.getmembers(conftest_module, inspect.isclass):
-            # Check if it's a subclass of PytestSettings but not PytestSettings itself
-            if (
-                issubclass(obj, PytestSettings)
-                and obj is not PytestSettings
-                and obj.__module__ == "conftest"  # Ensure it's defined in conftest, not imported
-            ):
-                custom_classes.append(obj)
-
-        # If we found custom classes, use the first one
-        if custom_classes:
-            custom_class = custom_classes[0]
-            # Log discovery for debugging
-            if hasattr(config, "hook") and hasattr(config.hook, "pytest_configure"):
-                # Use pytest's terminal writer if available
-                if hasattr(config, "_configured") and not config._configured:
-                    pass  # Don't log during early configuration
-            return custom_class
-
-        # No custom class found, return default
-        return PytestSettings
-
-    except Exception as e:
-        # If anything goes wrong, log the error and return default
-        if hasattr(config, "warn"):
-            config.warn(
-                "C1",
-                f"Failed to discover custom PytestSettings class from conftest.py: {e}",
-                fslocation=str(conftest_path),
-            )
-        # Return default on any error
-        return PytestSettings
+    # PRIORITY 3: Return default
+    return PytestSettings
 
 
 def load_settings_for_config(
