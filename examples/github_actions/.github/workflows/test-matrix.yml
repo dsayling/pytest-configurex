@@ -1,0 +1,64 @@
+name: Test Matrix (Multiple Environments)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.9", "3.12"]
+        test-type: [unit, integration]
+        exclude:
+          # Skip integration tests on Windows (example)
+          - os: windows-latest
+            test-type: integration
+
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }} / ${{ matrix.test-type }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run ${{ matrix.test-type }} tests
+        run: |
+          # Option 1: Use environment variables (recommended)
+          export X_VERBOSITY=1
+          export X_COVERAGE_ENABLED=true
+          export X_COVERAGE_REPORT=xml
+
+          if [ "${{ matrix.test-type }}" == "unit" ]; then
+            export X_XDIST_NUMPROCESSES=auto
+            # Run tests from unit directory or use pytest -k pattern
+            uv run pytest tests/unit/
+          else
+            # Run tests from integration directory
+            uv run pytest tests/integration/
+          fi
+
+          # Option 2: Use markers (requires tests to be marked!)
+          # if [ "${{ matrix.test-type }}" == "unit" ]; then
+          #   uv run pytest -m "unit and not slow"
+          # else
+          #   uv run pytest -m "integration"
+          # fi
+        shell: bash
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: ${{ matrix.test-type }}-${{ matrix.os }}-py${{ matrix.python-version }}

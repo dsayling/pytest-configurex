@@ -1,0 +1,151 @@
+# Example pyproject.toml with poethepoet (poe) tasks
+# Install with: pip install poethepoet
+# Run with: poe <task-name>
+
+[project]
+name = "my-project"
+version = "0.1.0"
+dependencies = [
+    "pytest>=8.0",
+    "pytest-configurex",
+]
+
+[project.optional-dependencies]
+dev = [
+    "poethepoet",
+    "pytest-cov",
+    "pytest-xdist",
+]
+
+# ============================================================================
+# poethepoet (poe) Task Configuration
+# ============================================================================
+
+[tool.poe.tasks]
+
+# ---- Simple test tasks ----
+
+test = "pytest"  # Default: uses .env.pytest
+
+test-unit = {cmd = "pytest", env = {X_MARKERS = "unit and not slow", X_VERBOSITY = "2", X_XDIST_NUMPROCESSES = "auto"}}
+
+test-integration = {cmd = "pytest", env = {X_MARKERS = "integration", X_VERBOSITY = "1"}}
+
+test-e2e = {cmd = "pytest", env = {X_MARKERS = "e2e", X_LOG_FILE = "e2e.log"}}
+
+# ---- Test with coverage ----
+
+[tool.poe.tasks.test-cov]
+cmd = "pytest"
+env.X_COVERAGE_ENABLED = "true"
+env.X_COVERAGE_SOURCE = "src"
+env.X_COVERAGE_REPORT = "term-missing"
+
+# ---- Environment-based tasks ----
+
+[tool.poe.tasks.test-dev]
+shell = "cp .env.pytest.dev .env.pytest && pytest"
+
+[tool.poe.tasks.test-staging]
+shell = "cp .env.pytest.staging .env.pytest && pytest"
+
+[tool.poe.tasks.test-prod]
+shell = "cp .env.pytest.production .env.pytest && pytest"
+
+# ---- Watch mode (requires pytest-watch) ----
+
+[tool.poe.tasks.test-watch]
+cmd = "ptw"  # pytest-watch
+env.X_MARKERS = "unit and not slow"
+env.X_VERBOSITY = "1"
+
+# ---- Fast feedback loop ----
+
+[tool.poe.tasks.test-fast]
+sequence = ["test-unit", "lint"]
+default_item_type = "cmd"
+
+# ---- Lint task (bonus) ----
+
+[tool.poe.tasks.lint]
+sequence = [
+    {cmd = "ruff format ."},
+    {cmd = "ruff check ."},
+]
+
+# ---- Full CI simulation ----
+
+[tool.poe.tasks.ci]
+sequence = [
+    "lint",
+    "test-unit",
+    "test-integration",
+    {cmd = "echo 'All checks passed!'"},
+]
+
+# ---- Verbose test task ----
+
+[tool.poe.tasks.test-verbose]
+cmd = "pytest"
+env.X_VERBOSITY = "3"
+env.X_LOG_CLI = "true"
+env.X_LOG_LEVEL = "DEBUG"
+
+# ---- Parallel test execution ----
+
+[tool.poe.tasks.test-parallel]
+cmd = "pytest"
+env.X_XDIST_NUMPROCESSES = "4"
+env.X_XDIST_DIST = "loadscope"
+env.X_MARKERS = "unit"
+
+# ---- Custom task with script ----
+
+[tool.poe.tasks.test-report]
+script = "scripts.test_report:generate"
+help = "Generate test report after running tests"
+
+# ============================================================================
+# pytest-configurex Configuration
+# ============================================================================
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Optional: explicit registration for performance
+# configurex_settings_class = "tests.settings.MyTestSettings"
+
+markers = [
+    "unit: Unit tests (fast, isolated)",
+    "integration: Integration tests (medium speed)",
+    "e2e: End-to-end tests (slow)",
+    "slow: Tests that take a long time",
+]
+
+# ============================================================================
+# Usage Examples
+# ============================================================================
+
+# Run default tests:
+#   poe test
+
+# Run only unit tests (fast):
+#   poe test-unit
+
+# Run with coverage:
+#   poe test-cov
+
+# Run in watch mode during development:
+#   poe test-watch
+
+# Run full CI locally:
+#   poe ci
+
+# Run verbose for debugging:
+#   poe test-verbose
+
+# Run tests in parallel:
+#   poe test-parallel

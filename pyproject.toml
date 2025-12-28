@@ -1,0 +1,98 @@
+[build-system]
+requires = [
+  "setuptools>=61.0.0",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pytest-configurex"
+description = "Configure pytest with .env files and pydantic-settings for flexible, type-safe test configuration"
+version = "0.0.1"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Drew Ayling", email = "drew@ayling.fyi" },
+]
+maintainers = [
+    { name = "Drew Ayling", email = "drew@ayling.fyi" },
+]
+license = {file = "LICENSE"}
+classifiers = [
+    "Framework :: Pytest",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Testing",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "pytest>=8.3.4",
+    "pydantic-settings>=2.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.6.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/dsayling/pytest-configurex"
+Repository = "https://github.com/dsayling/pytest-configurex"
+Documentation = "https://github.com/dsayling/pytest-configurex/blob/main/USAGE.md"
+"Bug Tracker" = "https://github.com/dsayling/pytest-configurex/issues"
+Changelog = "https://github.com/dsayling/pytest-configurex/releases"
+
+[project.entry-points.pytest11]
+configurex = "pytest_configurex.plugin"
+
+[tool.setuptools]
+packages = ["pytest_configurex"]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+pytest_configurex = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "C90", # mccabe complexity
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501", # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# pytest-configurex options
+# configurex_settings_class = "myapp.settings.MySettings"  # Optional: explicit registration
