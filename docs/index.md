@@ -2,9 +2,8 @@
 
 **Configure pytest with .env files and pydantic-settings for flexible, type-safe test configuration.**
 
-[![PyPI version](https://img.shields.io/pypi/v/pytest-configurex.svg)](https://pypi.org/project/pytest-configurex)
-[![Python versions](https://img.shields.io/pypi/pyversions/pytest-configurex.svg)](https://pypi.org/project/pytest-configurex)
 [![Build Status](https://github.com/dsayling/pytest-configurex/actions/workflows/main.yml/badge.svg)](https://github.com/dsayling/pytest-configurex/actions/workflows/main.yml)
+[![Python versions](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
 
 ---
 
@@ -27,12 +26,16 @@ pytest-configurex is a pytest plugin that makes test configuration simple, flexi
 
 ### Installation
 
-Install via pip or uv:
+> **Note**: This package has not yet been published to PyPI.
+
+Install directly from GitHub using pip or uv:
 
 ```bash
-pip install pytest-configurex
-# or
-uv add pytest-configurex
+# Using pip
+pip install git+https://github.com/dsayling/pytest-configurex.git
+
+# Using uv
+uv add git+https://github.com/dsayling/pytest-configurex.git
 ```
 
 ### Basic Usage
@@ -230,7 +233,6 @@ Please ensure test coverage stays at or improves from current levels.
 
 - **Issues**: [GitHub Issues](https://github.com/dsayling/pytest-configurex/issues)
 - **Repository**: [GitHub](https://github.com/dsayling/pytest-configurex)
-- **PyPI**: [pytest-configurex](https://pypi.org/project/pytest-configurex)
 
 ---
 
