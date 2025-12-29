@@ -4,7 +4,7 @@ Run performance tests and generate reports in both markdown and JSON formats.
 
 This script:
 1. Runs the performance benchmarks using pyperf
-2. Parses the results
+2. Parses the results using pyperf's built-in parser
 3. Generates a markdown report
 4. Generates a JSON report
 """
@@ -15,9 +15,11 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import pyperf
+
 
 def run_performance_benchmarks():
-    """Run performance benchmarks and return results as JSON."""
+    """Run performance benchmarks and return pyperf BenchmarkSuite."""
     print("Running performance benchmarks...")
     print("This may take several minutes...\n")
     
@@ -37,39 +39,39 @@ def run_performance_benchmarks():
         print(f"Error running benchmarks: {result.stderr}")
         sys.exit(1)
     
-    # Read results
+    # Read results using pyperf's built-in parser
     results_file = Path("performance_results.json")
     if not results_file.exists():
         print("Error: Results file not created")
         sys.exit(1)
     
     with open(results_file) as f:
-        data = json.load(f)
+        suite = pyperf.BenchmarkSuite.load(f)
     
-    return data
+    return suite
 
 
-def parse_benchmark_results(data):
-    """Parse pyperf benchmark results."""
-    benchmarks = data.get("benchmarks", [])
-    
+def parse_benchmark_results(suite):
+    """Parse pyperf BenchmarkSuite into simplified results."""
     results = {}
-    for bench in benchmarks:
-        name = bench.get("metadata", {}).get("name", "unknown")
-        runs = bench.get("runs", [])
+    
+    for benchmark in suite.get_benchmarks():
+        name = benchmark.get_name()
+        # Use pyperf's built-in mean() method
+        mean_value = benchmark.mean()
         
-        if runs:
-            # Get values from runs
-            values = [run.get("values", [None])[0] for run in runs if run.get("values")]
-            if values:
-                mean = sum(values) / len(values)
-                results[name] = {
-                    "mean": mean,
-                    "min": min(values),
-                    "max": max(values),
-                    "runs": len(values),
-                    "values": values
-                }
+        # Get all values from runs
+        values = []
+        for run in benchmark.get_runs():
+            values.extend(run.values)
+        
+        results[name] = {
+            "mean": mean_value,
+            "min": min(values) if values else 0,
+            "max": max(values) if values else 0,
+            "runs": len(benchmark.get_runs()),
+            "values": values
+        }
     
     return results
 
@@ -204,10 +206,10 @@ def main():
     print()
     
     # Run benchmarks
-    data = run_performance_benchmarks()
+    suite = run_performance_benchmarks()
     
     # Parse results
-    results = parse_benchmark_results(data)
+    results = parse_benchmark_results(suite)
     
     if not results:
         print("Error: No benchmark results found")
