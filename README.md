@@ -92,8 +92,8 @@ For detailed documentation and advanced usage, see [USAGE.md](https://github.com
 
 pytest-configurex is designed to have minimal overhead. Performance benchmarks show:
 
-- **Configuration loading time**: ~321ms per test run (using `.env.pytest`)
-- **Overhead vs vanilla pytest**: Negligible (~-4.4% in benchmarks, within margin of error)
+- **Configuration loading time**: 0.339845 seconds (~340ms) per test run (using `.env.pytest`)
+- **Overhead vs vanilla pytest**: Negligible (~-0.99% in benchmarks, within margin of error)
 - **Fastest method**: `.env.pytest` file
 
 See [PERFORMANCE.md](https://github.com/dsayling/pytest-configurex/blob/main/PERFORMANCE.md) for detailed benchmark results.
