@@ -88,6 +88,32 @@ def test_something(configurex):
 
 For detailed documentation and advanced usage, see [USAGE.md](https://github.com/dsayling/pytest-configurex/blob/main/USAGE.md).
 
+## Performance
+
+pytest-configurex is designed to have minimal overhead. Performance benchmarks show:
+
+- **Configuration loading time**: ~321ms per test run (using `.env.pytest`)
+- **Overhead vs vanilla pytest**: Negligible (~-4.4% in benchmarks, within margin of error)
+- **Fastest method**: `.env.pytest` file
+
+See [PERFORMANCE.md](https://github.com/dsayling/pytest-configurex/blob/main/PERFORMANCE.md) for detailed benchmark results.
+
+### Running Performance Tests
+
+To run performance benchmarks on your system:
+
+```bash
+# Install performance testing dependencies
+pip install pyperf
+
+# Run benchmarks and generate reports
+python3 performance_tests/run_performance_tests.py
+```
+
+This generates:
+- `PERFORMANCE.md` - Human-readable report with analysis
+- `performance_results_summary.json` - Machine-readable summary data
+
 ## Contributing
 
 Contributions are very welcome. Tests can be run with [pytest](https://github.com/pytest-dev/pytest), please ensure the coverage at least stays the same before you submit a pull request.

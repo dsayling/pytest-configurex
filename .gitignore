@@ -71,3 +71,7 @@ target/
 # pyenv
 .python-version
 
+# Performance test results
+performance_results.json
+performance_results_summary.json
+
