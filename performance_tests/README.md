@@ -18,8 +18,10 @@ The performance tests measure the time it takes to load configuration via:
 Install required dependencies:
 
 ```bash
-pip install pyperf psutil
+pip install pyperf
 ```
+
+Note: `psutil` is automatically installed as a dependency of `pyperf`.
 
 ### Run Full Test Suite with Reports
 
