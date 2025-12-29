@@ -17,6 +17,10 @@ from pathlib import Path
 
 import pyperf
 
+# Timeout for running full benchmark suite (in seconds)
+# This is longer than individual subprocess timeouts since it runs multiple benchmarks
+BENCHMARK_SUITE_TIMEOUT = 600
+
 
 def run_performance_benchmarks():
     """Run performance benchmarks and return pyperf BenchmarkSuite."""
@@ -33,6 +37,7 @@ def run_performance_benchmarks():
         ],
         capture_output=True,
         text=True,
+        timeout=BENCHMARK_SUITE_TIMEOUT,
     )
     
     if result.returncode != 0:
