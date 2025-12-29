@@ -4,10 +4,13 @@
 
 ### 1. Install the plugin
 
+> **Note**: This package has not yet been published to PyPI.
+
 ```bash
-uv add pytest-configurex
+# Install directly from GitHub
+pip install git+https://github.com/dsayling/pytest-configurex.git
 # or
-pip install pytest-configurex
+uv add git+https://github.com/dsayling/pytest-configurex.git
 ```
 
 ### 2. Create a `.env.pytest` file
