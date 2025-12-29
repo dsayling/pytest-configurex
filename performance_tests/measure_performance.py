@@ -11,12 +11,10 @@ This script measures the time it takes to load configuration via different metho
 Uses pyperf for accurate timing measurements with multiple runs.
 """
 
-import json
 import os
 import subprocess
 import sys
 import tempfile
-from datetime import datetime
 from pathlib import Path
 
 import pyperf
@@ -32,7 +30,7 @@ def test_dummy():
     return test_file
 
 
-def measure_env_pytest_loading(loops: int) -> float:
+def measure_env_pytest_loading():
     """Measure time to load configuration from .env.pytest file."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
@@ -51,22 +49,18 @@ X_COVERAGE_SOURCE=src
         # Create test file
         create_test_file(tmpdir_path)
         
-        # Measure time
-        t0 = pyperf.perf_counter()
-        for _ in range(loops):
-            result = subprocess.run(
-                [sys.executable, "-m", "pytest", "--collect-only", "-q"],
-                cwd=tmpdir,
-                capture_output=True,
-                env=os.environ.copy(),
-            )
-            if result.returncode != 0:
-                raise RuntimeError(f"pytest failed: {result.stderr.decode()}")
-        
-        return pyperf.perf_counter() - t0
+        # Run pytest once - pyperf will handle timing and loops
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "--collect-only", "-q"],
+            cwd=tmpdir,
+            capture_output=True,
+            env=os.environ.copy(),
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"pytest failed: {result.stderr.decode()}")
 
 
-def measure_env_loading(loops: int) -> float:
+def measure_env_loading():
     """Measure time to load configuration from .env file."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
@@ -82,22 +76,18 @@ X_MARKERS=not slow
         # Create test file
         create_test_file(tmpdir_path)
         
-        # Measure time
-        t0 = pyperf.perf_counter()
-        for _ in range(loops):
-            result = subprocess.run(
-                [sys.executable, "-m", "pytest", "--collect-only", "-q"],
-                cwd=tmpdir,
-                capture_output=True,
-                env=os.environ.copy(),
-            )
-            if result.returncode != 0:
-                raise RuntimeError(f"pytest failed: {result.stderr.decode()}")
-        
-        return pyperf.perf_counter() - t0
+        # Run pytest once - pyperf will handle timing and loops
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "--collect-only", "-q"],
+            cwd=tmpdir,
+            capture_output=True,
+            env=os.environ.copy(),
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"pytest failed: {result.stderr.decode()}")
 
 
-def measure_environment_variables_loading(loops: int) -> float:
+def measure_environment_variables_loading():
     """Measure time to load configuration from environment variables."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
@@ -113,22 +103,18 @@ def measure_environment_variables_loading(loops: int) -> float:
             "X_MARKERS": "not slow",
         })
         
-        # Measure time
-        t0 = pyperf.perf_counter()
-        for _ in range(loops):
-            result = subprocess.run(
-                [sys.executable, "-m", "pytest", "--collect-only", "-q"],
-                cwd=tmpdir,
-                capture_output=True,
-                env=env,
-            )
-            if result.returncode != 0:
-                raise RuntimeError(f"pytest failed: {result.stderr.decode()}")
-        
-        return pyperf.perf_counter() - t0
+        # Run pytest once - pyperf will handle timing and loops
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "--collect-only", "-q"],
+            cwd=tmpdir,
+            capture_output=True,
+            env=env,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"pytest failed: {result.stderr.decode()}")
 
 
-def measure_cli_only_loading(loops: int) -> float:
+def measure_cli_only_loading():
     """Measure time to load configuration via traditional pytest CLI (no configurex)."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
@@ -136,39 +122,32 @@ def measure_cli_only_loading(loops: int) -> float:
         # Create test file
         create_test_file(tmpdir_path)
         
-        # Measure time with CLI options
-        t0 = pyperf.perf_counter()
-        for _ in range(loops):
-            result = subprocess.run(
-                [
-                    sys.executable, "-m", "pytest",
-                    "--collect-only", "-q",
-                    "-vv",
-                    "--log-level=INFO",
-                    "-m", "not slow"
-                ],
-                cwd=tmpdir,
-                capture_output=True,
-                env=os.environ.copy(),
-            )
-            if result.returncode != 0:
-                raise RuntimeError(f"pytest failed: {result.stderr.decode()}")
-        
-        return pyperf.perf_counter() - t0
+        # Run pytest once with CLI options - pyperf will handle timing and loops
+        result = subprocess.run(
+            [
+                sys.executable, "-m", "pytest",
+                "--collect-only", "-q",
+                "-vv",
+                "--log-level=INFO",
+                "-m", "not slow"
+            ],
+            cwd=tmpdir,
+            capture_output=True,
+            env=os.environ.copy(),
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"pytest failed: {result.stderr.decode()}")
 
 
 def main():
     """Run all performance benchmarks."""
     runner = pyperf.Runner()
     
-    print("Running performance tests for pytest-configurex...")
-    print("This will take a few minutes...\n")
-    
-    # Run benchmarks
-    runner.bench_time_func("load_from_env_pytest", measure_env_pytest_loading)
-    runner.bench_time_func("load_from_env", measure_env_loading)
-    runner.bench_time_func("load_from_environment_vars", measure_environment_variables_loading)
-    runner.bench_time_func("load_from_cli_only", measure_cli_only_loading)
+    # Run benchmarks - pyperf.Runner handles timing, loops, and statistical analysis
+    runner.bench_func("load_from_env_pytest", measure_env_pytest_loading)
+    runner.bench_func("load_from_env", measure_env_loading)
+    runner.bench_func("load_from_environment_vars", measure_environment_variables_loading)
+    runner.bench_func("load_from_cli_only", measure_cli_only_loading)
 
 
 if __name__ == "__main__":
