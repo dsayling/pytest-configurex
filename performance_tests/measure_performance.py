@@ -28,13 +28,13 @@ def benchmark_env_pytest_loading():
     # Setup (not timed): Create temporary directory, test file, and .env.pytest
     tmpdir = tempfile.TemporaryDirectory()
     tmpdir_path = Path(tmpdir.name)
-    
+
     test_file = tmpdir_path / "test_sample.py"
     test_file.write_text("""
 def test_dummy():
     assert True
 """)
-    
+
     env_file = tmpdir_path / ".env.pytest"
     env_file.write_text("""
 X_VERBOSITY=2
@@ -44,7 +44,7 @@ X_LOG_CLI=true
 X_COVERAGE_ENABLED=true
 X_COVERAGE_SOURCE=src
 """)
-    
+
     def run_pytest():
         """This function is timed - only pytest execution."""
         result = subprocess.run(
@@ -56,7 +56,7 @@ X_COVERAGE_SOURCE=src
         )
         if result.returncode != 0:
             raise RuntimeError(f"pytest failed: {result.stderr.decode()}")
-    
+
     return run_pytest, tmpdir
 
 
@@ -65,20 +65,20 @@ def benchmark_env_loading():
     # Setup (not timed): Create temporary directory, test file, and .env
     tmpdir = tempfile.TemporaryDirectory()
     tmpdir_path = Path(tmpdir.name)
-    
+
     test_file = tmpdir_path / "test_sample.py"
     test_file.write_text("""
 def test_dummy():
     assert True
 """)
-    
+
     env_file = tmpdir_path / ".env"
     env_file.write_text("""
 X_VERBOSITY=2
 X_LOG_LEVEL=INFO
 X_MARKERS=not slow
 """)
-    
+
     def run_pytest():
         """This function is timed - only pytest execution."""
         result = subprocess.run(
@@ -90,7 +90,7 @@ X_MARKERS=not slow
         )
         if result.returncode != 0:
             raise RuntimeError(f"pytest failed: {result.stderr.decode()}")
-    
+
     return run_pytest, tmpdir
 
 
@@ -99,20 +99,22 @@ def benchmark_environment_variables_loading():
     # Setup (not timed): Create temporary directory, test file, and env vars
     tmpdir = tempfile.TemporaryDirectory()
     tmpdir_path = Path(tmpdir.name)
-    
+
     test_file = tmpdir_path / "test_sample.py"
     test_file.write_text("""
 def test_dummy():
     assert True
 """)
-    
+
     env = os.environ.copy()
-    env.update({
-        "X_VERBOSITY": "2",
-        "X_LOG_LEVEL": "INFO",
-        "X_MARKERS": "not slow",
-    })
-    
+    env.update(
+        {
+            "X_VERBOSITY": "2",
+            "X_LOG_LEVEL": "INFO",
+            "X_MARKERS": "not slow",
+        }
+    )
+
     def run_pytest():
         """This function is timed - only pytest execution."""
         result = subprocess.run(
@@ -124,7 +126,7 @@ def test_dummy():
         )
         if result.returncode != 0:
             raise RuntimeError(f"pytest failed: {result.stderr.decode()}")
-    
+
     return run_pytest, tmpdir
 
 
@@ -133,22 +135,26 @@ def benchmark_cli_only_loading():
     # Setup (not timed): Create temporary directory and test file
     tmpdir = tempfile.TemporaryDirectory()
     tmpdir_path = Path(tmpdir.name)
-    
+
     test_file = tmpdir_path / "test_sample.py"
     test_file.write_text("""
 def test_dummy():
     assert True
 """)
-    
+
     def run_pytest():
         """This function is timed - only pytest execution."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "pytest",
-                "--collect-only", "-q",
+                sys.executable,
+                "-m",
+                "pytest",
+                "--collect-only",
+                "-q",
                 "-vv",
                 "--log-level=INFO",
-                "-m", "not slow"
+                "-m",
+                "not slow",
             ],
             cwd=tmpdir_path,
             capture_output=True,
@@ -157,35 +163,35 @@ def test_dummy():
         )
         if result.returncode != 0:
             raise RuntimeError(f"pytest failed: {result.stderr.decode()}")
-    
+
     return run_pytest, tmpdir
 
 
 def main():
     """Run all performance benchmarks."""
     runner = pyperf.Runner()
-    
+
     # Benchmark 1: .env.pytest loading
     run_pytest_1, tmpdir_1 = benchmark_env_pytest_loading()
     try:
         runner.bench_func("load_from_env_pytest", run_pytest_1)
     finally:
         tmpdir_1.cleanup()
-    
+
     # Benchmark 2: .env loading
     run_pytest_2, tmpdir_2 = benchmark_env_loading()
     try:
         runner.bench_func("load_from_env", run_pytest_2)
     finally:
         tmpdir_2.cleanup()
-    
+
     # Benchmark 3: environment variables loading
     run_pytest_3, tmpdir_3 = benchmark_environment_variables_loading()
     try:
         runner.bench_func("load_from_environment_vars", run_pytest_3)
     finally:
         tmpdir_3.cleanup()
-    
+
     # Benchmark 4: CLI only (traditional pytest)
     run_pytest_4, tmpdir_4 = benchmark_cli_only_loading()
     try:
