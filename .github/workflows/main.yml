@@ -33,4 +33,5 @@ jobs:
         run: pytest
 
       - name: Run performance tests
+        if: matrix.python-version == '3.12'
         run: python3 performance_tests/run_performance_tests.py
