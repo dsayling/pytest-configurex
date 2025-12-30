@@ -31,3 +31,6 @@ jobs:
 
       - name: Run tests
         run: pytest
+
+      - name: Run performance tests
+        run: python3 performance_tests/run_performance_tests.py
