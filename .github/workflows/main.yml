@@ -31,3 +31,14 @@ jobs:
 
       - name: Run tests
         run: pytest
+
+      - name: Run performance tests
+        if: matrix.python-version == '3.12'
+        run: python3 performance_tests/run_performance_tests.py
+
+      - name: Add performance results to job summary
+        if: matrix.python-version == '3.12' && success()
+        run: |
+          if [ -f PERFORMANCE.md ]; then
+            cat PERFORMANCE.md >> $GITHUB_STEP_SUMMARY
+          fi
