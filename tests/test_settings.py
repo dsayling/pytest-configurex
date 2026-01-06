@@ -136,7 +136,7 @@ class TestLoadSettings:
 
 
 class TestApplyVerbosity:
-    """Tests for _apply_verbosity method."""
+    """Tests for verbosity field mapping via apply_to_pytest."""
 
     def test_apply_verbosity_when_not_set_in_cli(self):
         """Test verbosity is applied when not set via CLI."""
@@ -145,7 +145,7 @@ class TestApplyVerbosity:
         config.option.verbose = 0
         config.invocation_params.args = []
 
-        settings._apply_verbosity(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.verbose == 2
 
@@ -156,7 +156,7 @@ class TestApplyVerbosity:
         config.option.verbose = 3
         config.invocation_params.args = ["-vvv"]
 
-        settings._apply_verbosity(config)
+        settings.apply_to_pytest(config)
 
         # Should remain unchanged
         assert config.option.verbose == 3
@@ -168,13 +168,13 @@ class TestApplyVerbosity:
         config.option.verbose = 0
         config.invocation_params.args = []
 
-        settings._apply_verbosity(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.verbose == 0
 
 
 class TestApplyLoggingSettings:
-    """Tests for _apply_logging_settings method."""
+    """Tests for logging field mappings via apply_to_pytest."""
 
     def test_apply_log_level(self):
         """Test log level is applied when not set via CLI."""
@@ -184,7 +184,7 @@ class TestApplyLoggingSettings:
         config.option.log_file_level = None
         config.invocation_params.args = []
 
-        settings._apply_logging_settings(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.log_cli_level == "INFO"
         assert config.option.log_file_level == "INFO"
@@ -196,7 +196,7 @@ class TestApplyLoggingSettings:
         config.option.log_cli = False
         config.invocation_params.args = []
 
-        settings._apply_logging_settings(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.log_cli is True
 
@@ -207,7 +207,7 @@ class TestApplyLoggingSettings:
         config.option.log_file = None
         config.invocation_params.args = []
 
-        settings._apply_logging_settings(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.log_file == "test.log"
 
@@ -218,13 +218,13 @@ class TestApplyLoggingSettings:
         config.option.log_cli_level = "DEBUG"
         config.invocation_params.args = ["--log-cli-level=DEBUG"]
 
-        settings._apply_logging_settings(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.log_cli_level == "DEBUG"
 
 
 class TestApplyMarkerSettings:
-    """Tests for _apply_marker_settings method."""
+    """Tests for marker field mapping via apply_to_pytest."""
 
     def test_apply_markers(self):
         """Test markers are applied when not set via CLI."""
@@ -233,7 +233,7 @@ class TestApplyMarkerSettings:
         config.option.markexpr = None
         config.invocation_params.args = []
 
-        settings._apply_marker_settings(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.markexpr == "slow"
 
@@ -244,13 +244,13 @@ class TestApplyMarkerSettings:
         config.option.markexpr = "fast"
         config.invocation_params.args = ["-m", "fast"]
 
-        settings._apply_marker_settings(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.markexpr == "fast"
 
 
 class TestApplyCoverageSettings:
-    """Tests for _apply_coverage_settings method."""
+    """Tests for coverage field mappings via apply_to_pytest."""
 
     def test_apply_coverage_enabled(self):
         """Test coverage is applied when not set via CLI."""
@@ -259,7 +259,7 @@ class TestApplyCoverageSettings:
         config.option.cov_source = []
         config.invocation_params.args = []
 
-        settings._apply_coverage_settings(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.cov_source == ["src"]
 
@@ -270,7 +270,7 @@ class TestApplyCoverageSettings:
         config.option.cov_report = {}
         config.invocation_params.args = []
 
-        settings._apply_coverage_settings(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.cov_report == {"html": None}
 
@@ -281,13 +281,13 @@ class TestApplyCoverageSettings:
         config.option.cov_source = ["tests"]
         config.invocation_params.args = ["--cov=tests"]
 
-        settings._apply_coverage_settings(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.cov_source == ["tests"]
 
 
 class TestApplyXdistSettings:
-    """Tests for _apply_xdist_settings method."""
+    """Tests for xdist field mappings via apply_to_pytest."""
 
     def test_apply_xdist_numprocesses(self):
         """Test xdist numprocesses is applied when not set via CLI."""
@@ -296,7 +296,7 @@ class TestApplyXdistSettings:
         config.option.numprocesses = None
         config.invocation_params.args = []
 
-        settings._apply_xdist_settings(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.numprocesses == 4
 
@@ -307,7 +307,7 @@ class TestApplyXdistSettings:
         config.option.dist = "load"
         config.invocation_params.args = []
 
-        settings._apply_xdist_settings(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.dist == "loadscope"
 
@@ -318,7 +318,7 @@ class TestApplyXdistSettings:
         config.option.numprocesses = 2
         config.invocation_params.args = ["-n", "2"]
 
-        settings._apply_xdist_settings(config)
+        settings.apply_to_pytest(config)
 
         assert config.option.numprocesses == 2
 

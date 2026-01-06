@@ -1,10 +1,43 @@
 """Core settings module for pytest-configurex."""
 
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+@dataclass
+class PytestFieldMapping:
+    """
+    Metadata for mapping a Pydantic field to pytest configuration options.
+
+    This dataclass defines how a settings field should be applied to pytest's
+    config object, including CLI detection, value transformation, and conditional
+    application logic.
+
+    Attributes:
+        pytest_options: Tuple of pytest config.option attribute names to set.
+                       Can specify multiple targets (e.g., both log_cli_level and log_file_level).
+        cli_flags: Tuple of CLI flags that, if present, prevent this setting from applying.
+                  Respects pytest's CLI priority.
+        apply_when: Condition for when to apply the setting based on field value:
+                   - "always": Always apply regardless of value
+                   - "if_truthy": Only apply if value is truthy (e.g., non-zero, non-empty)
+                   - "if_not_none": Only apply if value is not None
+        transform: Optional function to transform the value before setting.
+                  Useful for type conversions (e.g., str → list, str → dict).
+        requires: Name of another field that must be truthy for this field to apply.
+                 Enables conditional dependencies (e.g., coverage_source requires coverage_enabled).
+    """
+
+    pytest_options: tuple[str, ...]
+    cli_flags: tuple[str, ...]
+    apply_when: Literal["always", "if_truthy", "if_not_none"] = "if_not_none"
+    transform: Callable[[Any], Any] | None = None
+    requires: str | None = None
 
 
 class PytestSettings(BaseSettings):
@@ -23,6 +56,13 @@ class PytestSettings(BaseSettings):
         ge=0,
         le=3,
         description="Verbosity level (0-3). Maps to -v flags.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("verbose",),
+                cli_flags=("-v", "-vv", "-vvv", "--verbose"),
+                apply_when="if_truthy",
+            )
+        },
     )
 
     # Logging configuration
@@ -30,22 +70,47 @@ class PytestSettings(BaseSettings):
         default=None,
         description="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). "
         "Maps to --log-cli-level and --log-file-level.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("log_cli_level", "log_file_level"),
+                cli_flags=("--log-level", "--log-cli-level", "--log-file-level"),
+            )
+        },
     )
 
     log_cli: bool = Field(
         default=False,
         description="Enable live logging to console. Maps to --log-cli.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("log_cli",),
+                cli_flags=("--log-cli",),
+                apply_when="if_truthy",
+            )
+        },
     )
 
     log_file: str | None = Field(
         default=None,
         description="Path to log file. Maps to --log-file.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("log_file",),
+                cli_flags=("--log-file",),
+            )
+        },
     )
 
     # Test selection
     markers: str | None = Field(
         default=None,
         description="Marker expression to filter tests. Maps to -m.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("markexpr",),
+                cli_flags=("-m", "--markers"),
+            )
+        },
     )
 
     # Coverage options (pytest-cov)
@@ -57,11 +122,26 @@ class PytestSettings(BaseSettings):
     coverage_source: str = Field(
         default=".",
         description="Coverage source path. Used with --cov.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("cov_source",),
+                cli_flags=("--cov",),
+                transform=lambda x: [x] if x else [],
+                requires="coverage_enabled",
+            )
+        },
     )
 
     coverage_report: str | None = Field(
         default=None,
         description="Coverage report type (term, term-missing, html, xml). Maps to --cov-report.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("cov_report",),
+                cli_flags=("--cov-report",),
+                transform=lambda x: {x: None},
+            )
+        },
     )
 
     # xdist options (pytest-xdist)
@@ -69,11 +149,23 @@ class PytestSettings(BaseSettings):
         default=None,
         ge=1,
         description="Number of parallel processes. Maps to -n.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("numprocesses",),
+                cli_flags=("-n", "--numprocesses"),
+            )
+        },
     )
 
     xdist_dist: str = Field(
         default="load",
         description="Distribution mode for xdist (load, loadscope, etc). Maps to --dist.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("dist",),
+                cli_flags=("--dist",),
+            )
+        },
     )
 
     model_config = SettingsConfigDict(
@@ -116,93 +208,68 @@ class PytestSettings(BaseSettings):
 
         return cls(_env_file=env_files, _env_file_encoding="utf-8")
 
-    def _apply_verbosity(self, config: Any) -> None:
-        """Apply verbosity setting if not overridden by CLI."""
-        from pytest_configurex.cli_detection import has_cli_option
-
-        if self.verbosity > 0 and not has_cli_option(config, "-v", "-vv", "-vvv", "--verbose"):
-            config.option.verbose = self.verbosity
-
-    def _apply_logging_settings(self, config: Any) -> None:
-        """Apply logging-related settings if not overridden by CLI."""
-        from pytest_configurex.cli_detection import has_cli_option
-
-        # Log level
-        if self.log_level and not has_cli_option(
-            config, "--log-level", "--log-cli-level", "--log-file-level"
-        ):
-            if hasattr(config.option, "log_cli_level"):
-                config.option.log_cli_level = self.log_level
-            if hasattr(config.option, "log_file_level"):
-                config.option.log_file_level = self.log_level
-
-        # Log CLI
-        if self.log_cli and not has_cli_option(config, "--log-cli"):
-            if hasattr(config.option, "log_cli"):
-                config.option.log_cli = True
-
-        # Log file
-        if self.log_file and not has_cli_option(config, "--log-file"):
-            if hasattr(config.option, "log_file"):
-                config.option.log_file = self.log_file
-
-    def _apply_marker_settings(self, config: Any) -> None:
-        """Apply marker expression setting if not overridden by CLI."""
-        from pytest_configurex.cli_detection import has_cli_option
-
-        if self.markers and not has_cli_option(config, "-m", "--markers"):
-            if hasattr(config.option, "markexpr"):
-                config.option.markexpr = self.markers
-
-    def _apply_coverage_settings(self, config: Any) -> None:
-        """Apply coverage-related settings if not overridden by CLI."""
-        from pytest_configurex.cli_detection import has_cli_option
-
-        # Coverage enabled
-        if self.coverage_enabled and not has_cli_option(config, "--cov"):
-            if hasattr(config.option, "cov_source"):
-                if not config.option.cov_source:
-                    config.option.cov_source = [self.coverage_source]
-
-        # Coverage report
-        if self.coverage_report and not has_cli_option(config, "--cov-report"):
-            if hasattr(config.option, "cov_report"):
-                config.option.cov_report = {self.coverage_report: None}
-
-    def _apply_xdist_settings(self, config: Any) -> None:
-        """Apply xdist-related settings if not overridden by CLI."""
-        from pytest_configurex.cli_detection import has_cli_option
-
-        # Number of processes
-        if self.xdist_numprocesses and not has_cli_option(config, "-n", "--numprocesses"):
-            if hasattr(config.option, "numprocesses"):
-                config.option.numprocesses = self.xdist_numprocesses
-
-        # Distribution mode
-        if self.xdist_dist and not has_cli_option(config, "--dist"):
-            if hasattr(config.option, "dist"):
-                config.option.dist = self.xdist_dist
-
-    def apply_to_pytest(self, config: Any) -> None:
+    def apply_to_pytest(self, config: Any) -> None:  # noqa: C901 # complexity is acceptable
         """
-        Apply settings to pytest config object, respecting CLI priority.
+        Apply settings to pytest config object using field metadata.
+
+        This method uses a metadata-driven approach to apply settings. Each field
+        with a "pytest_mapping" in its json_schema_extra will be automatically
+        applied to the pytest config based on its mapping configuration.
 
         Standard pytest CLI options take precedence over .env settings.
         This method is called during pytest_configure hook.
-        Override this in subclasses to customize behavior.
+        Override this in subclasses to customize behavior or add additional logic.
 
         Args:
             config: Pytest config object
         """
+        from pytest_configurex.cli_detection import has_cli_option
+
         # Store reference to settings in config for fixture access
         config._configurex_settings = self
 
-        # Apply all settings categories
-        self._apply_verbosity(config)
-        self._apply_logging_settings(config)
-        self._apply_marker_settings(config)
-        self._apply_coverage_settings(config)
-        self._apply_xdist_settings(config)
+        # Iterate through all fields and apply based on metadata
+        for field_name, field_info in self.model_fields.items():
+            # Extract mapping metadata
+            mapping: PytestFieldMapping | None = None
+            if field_info.json_schema_extra:
+                mapping = field_info.json_schema_extra.get("pytest_mapping")
+
+            if not mapping:
+                continue
+
+            # 1. Check CLI priority - skip if CLI option was provided
+            if mapping.cli_flags and has_cli_option(config, *mapping.cli_flags):
+                continue
+
+            # 2. Check requirements - skip if required field is not truthy
+            if mapping.requires:
+                required_value = getattr(self, mapping.requires, None)
+                if not required_value:
+                    continue
+
+            # 3. Get field value and check apply condition
+            value = getattr(self, field_name)
+            if mapping.apply_when == "if_truthy" and not value:
+                continue
+            if mapping.apply_when == "if_not_none" and value is None:
+                continue
+
+            # 4. Transform value if transformer is provided
+            if mapping.transform:
+                value = mapping.transform(value)
+
+            # 5. Apply to all target pytest options
+            for pytest_option in mapping.pytest_options:
+                if hasattr(config.option, pytest_option):
+                    # Special handling for coverage_source: only set if target is empty
+                    # This preserves the original behavior of checking "if not config.option.cov_source"
+                    if pytest_option == "cov_source":
+                        current = getattr(config.option, pytest_option)
+                        if current:
+                            continue
+
+                    setattr(config.option, pytest_option, value)
 
     def __repr__(self) -> str:
         """String representation showing key settings."""
