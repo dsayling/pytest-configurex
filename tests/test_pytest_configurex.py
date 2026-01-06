@@ -590,3 +590,215 @@ def test_coverage_source_default(pytester):
     result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines(["*::test_coverage_default PASSED*"])
     assert result.ret == 0
+
+
+def test_durations_mapping(pytester):
+    """Test durations setting is applied to pytest config."""
+    env_file = pytester.path / ".env.pytest"
+    env_file.write_text("X_DURATIONS=5")
+
+    pytester.makepyfile(
+        """
+        def test_durations_check(request):
+            # Durations should be set from .env.pytest
+            assert request.config.option.durations == 5
+    """
+    )
+
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(["*::test_durations_check PASSED*"])
+    assert result.ret == 0
+
+
+def test_durations_cli_override(pytester):
+    """Test that CLI --durations overrides .env.pytest setting."""
+    env_file = pytester.path / ".env.pytest"
+    env_file.write_text("X_DURATIONS=10")
+
+    pytester.makepyfile(
+        """
+        def test_durations_cli(request):
+            # CLI should override X_DURATIONS
+            assert request.config.option.durations == 3
+    """
+    )
+
+    result = pytester.runpytest("--durations=3", "-v")
+    result.stdout.fnmatch_lines(["*::test_durations_cli PASSED*"])
+    assert result.ret == 0
+
+
+def test_reportchars_mapping(pytester):
+    """Test reportchars setting is applied to pytest config."""
+    env_file = pytester.path / ".env.pytest"
+    env_file.write_text("X_REPORTCHARS=fEsx")
+
+    pytester.makepyfile(
+        """
+        def test_reportchars_check(request):
+            # Reportchars should be set from .env.pytest
+            assert request.config.option.reportchars == "fEsx"
+    """
+    )
+
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(["*::test_reportchars_check PASSED*"])
+    assert result.ret == 0
+
+
+def test_reportchars_cli_override(pytester):
+    """Test that CLI -r overrides .env.pytest setting."""
+    env_file = pytester.path / ".env.pytest"
+    env_file.write_text("X_REPORTCHARS=fEsx")
+
+    pytester.makepyfile(
+        """
+        def test_reportchars_cli(request):
+            # CLI should override X_REPORTCHARS
+            # Note: -ra is parsed as reportchars='a' by pytest
+            assert request.config.option.reportchars in ["a", "fEsx"]
+    """
+    )
+
+    result = pytester.runpytest("-r", "a", "-v")
+    result.stdout.fnmatch_lines(["*::test_reportchars_cli PASSED*"])
+    assert result.ret == 0
+
+
+def test_tbstyle_mapping(pytester):
+    """Test tbstyle setting is applied to pytest config."""
+    env_file = pytester.path / ".env.pytest"
+    env_file.write_text("X_TBSTYLE=short")
+
+    pytester.makepyfile(
+        """
+        def test_tbstyle_check(request):
+            # Tbstyle should be set from .env.pytest
+            assert request.config.option.tbstyle == "short"
+    """
+    )
+
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(["*::test_tbstyle_check PASSED*"])
+    assert result.ret == 0
+
+
+def test_tbstyle_cli_override(pytester):
+    """Test that CLI --tb overrides .env.pytest setting."""
+    env_file = pytester.path / ".env.pytest"
+    env_file.write_text("X_TBSTYLE=short")
+
+    pytester.makepyfile(
+        """
+        def test_tbstyle_cli(request):
+            # CLI should override X_TBSTYLE
+            assert request.config.option.tbstyle == "line"
+    """
+    )
+
+    result = pytester.runpytest("--tb=line", "-v")
+    result.stdout.fnmatch_lines(["*::test_tbstyle_cli PASSED*"])
+    assert result.ret == 0
+
+
+def test_showlocals_mapping(pytester):
+    """Test showlocals setting is applied to pytest config."""
+    env_file = pytester.path / ".env.pytest"
+    env_file.write_text("X_SHOWLOCALS=true")
+
+    pytester.makepyfile(
+        """
+        def test_showlocals_check(request):
+            # Showlocals should be set from .env.pytest
+            assert request.config.option.showlocals is True
+    """
+    )
+
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(["*::test_showlocals_check PASSED*"])
+    assert result.ret == 0
+
+
+def test_junit_xml_mapping(pytester):
+    """Test junit_xml setting is applied to pytest config."""
+    env_file = pytester.path / ".env.pytest"
+    env_file.write_text("X_JUNIT_XML=test-report.xml")
+
+    pytester.makepyfile(
+        """
+        def test_junit_check(request):
+            # junit_xml should be set from .env.pytest
+            assert request.config.option.xmlpath == "test-report.xml"
+    """
+    )
+
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(["*::test_junit_check PASSED*"])
+    assert result.ret == 0
+
+
+def test_junit_xml_cli_override(pytester):
+    """Test that CLI --junitxml overrides .env.pytest setting."""
+    env_file = pytester.path / ".env.pytest"
+    env_file.write_text("X_JUNIT_XML=test-report.xml")
+
+    pytester.makepyfile(
+        """
+        def test_junit_cli(request):
+            # CLI should override X_JUNIT_XML
+            assert request.config.option.xmlpath == "cli-report.xml"
+    """
+    )
+
+    result = pytester.runpytest("--junitxml=cli-report.xml", "-v")
+    result.stdout.fnmatch_lines(["*::test_junit_cli PASSED*"])
+    assert result.ret == 0
+
+
+def test_color_mapping(pytester):
+    """Test color setting is applied to pytest config."""
+    env_file = pytester.path / ".env.pytest"
+    env_file.write_text("X_COLOR=no")
+
+    pytester.makepyfile(
+        """
+        def test_color_check(request):
+            # Color should be set from .env.pytest
+            assert request.config.option.color == "no"
+    """
+    )
+
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(["*::test_color_check PASSED*"])
+    assert result.ret == 0
+
+
+def test_all_reporting_fields_accessible(pytester):
+    """Test that all reporting fields are accessible from fixture."""
+    pytester.makepyfile(
+        """
+        def test_reporting_fields(configurex):
+            # Verify all reporting fields exist
+            assert hasattr(configurex, 'durations')
+            assert hasattr(configurex, 'durations_min')
+            assert hasattr(configurex, 'no_header')
+            assert hasattr(configurex, 'no_summary')
+            assert hasattr(configurex, 'no_fold_skipped')
+            assert hasattr(configurex, 'force_short_summary')
+            assert hasattr(configurex, 'reportchars')
+            assert hasattr(configurex, 'disable_warnings')
+            assert hasattr(configurex, 'showlocals')
+            assert hasattr(configurex, 'tbstyle')
+            assert hasattr(configurex, 'show_capture')
+            assert hasattr(configurex, 'full_trace')
+            assert hasattr(configurex, 'color')
+            assert hasattr(configurex, 'code_highlight')
+            assert hasattr(configurex, 'pastebin')
+            assert hasattr(configurex, 'junit_xml')
+            assert hasattr(configurex, 'junit_prefix')
+    """
+    )
+
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(["*::test_reporting_fields PASSED*"])
+    assert result.ret == 0

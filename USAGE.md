@@ -89,6 +89,48 @@ X_XDIST_NUMPROCESSES=4     # Run tests in parallel with 4 processes
 X_XDIST_DIST=loadscope     # Distribution mode: load, loadscope, etc.
 ```
 
+### Reporting Options
+
+#### Durations
+```bash
+X_DURATIONS=10            # Show N slowest setup/test durations (N=0 for all)
+X_DURATIONS_MIN=0.5       # Minimal duration in seconds for inclusion in slowest list
+```
+
+#### Summary Options
+```bash
+X_NO_HEADER=true          # Disable header
+X_NO_SUMMARY=true         # Disable summary
+X_NO_FOLD_SKIPPED=true    # Do not fold skipped tests in short summary
+X_FORCE_SHORT_SUMMARY=true # Force condensed summary output
+X_REPORTCHARS=fEsx        # Show extra test summary info:
+                          # (f)ailed, (E)rror, (s)kipped, (x)failed, (X)passed,
+                          # (p)assed, (P)assed with output, (a)ll except passed,
+                          # or (A)ll
+X_DISABLE_WARNINGS=true   # Disable warnings summary
+```
+
+#### Traceback Options
+```bash
+X_SHOWLOCALS=true         # Show locals in tracebacks
+X_TBSTYLE=short           # Traceback print mode: auto/long/short/line/native/no
+X_SHOW_CAPTURE=no         # Controls captured output display: no/stdout/stderr/log/all
+X_FULL_TRACE=true         # Don't cut any tracebacks
+```
+
+#### Output Options
+```bash
+X_COLOR=yes               # Color terminal output: yes/no/auto
+X_CODE_HIGHLIGHT=no       # Whether code should be highlighted: yes/no
+X_PASTEBIN=failed         # Send failed|all info to bpaste.net pastebin service
+```
+
+#### JUnit XML Options
+```bash
+X_JUNIT_XML=report.xml    # Create junit-xml style report file at given path
+X_JUNIT_PREFIX=MyProject  # Prepend prefix to classnames in junit-xml output
+```
+
 ## Using the `configurex` Fixture
 
 Access settings in your tests via the `configurex` fixture:
