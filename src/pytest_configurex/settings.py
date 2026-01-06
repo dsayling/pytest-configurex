@@ -208,7 +208,7 @@ class PytestSettings(BaseSettings):
 
         return cls(_env_file=env_files, _env_file_encoding="utf-8")
 
-    def apply_to_pytest(self, config: Any) -> None:
+    def apply_to_pytest(self, config: Any) -> None:  # noqa: C901 # complexity is acceptable
         """
         Apply settings to pytest config object using field metadata.
 
