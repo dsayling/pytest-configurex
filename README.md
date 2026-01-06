@@ -18,8 +18,8 @@ This [pytest](https://github.com/pytest-dev/pytest) plugin was generated with [C
 - **Fixture access**: Access settings in tests via the `configurex` fixture
 - **Priority-based**: Standard pytest CLI args override .env files, which override defaults
 - **Flexible discovery**: Searches for `.env.pytest`, then `.env`, then environment variables
-- **Built-in support**: Verbosity, logging, markers, coverage (pytest-cov), and parallel execution (pytest-xdist)
-- **No custom CLI**: Uses standard pytest options (`-vv`, `--log-level`, `-m`, etc.) - no new options to learn
+- **Built-in support**: Verbosity, logging, markers, coverage (pytest-cov), parallel execution (pytest-xdist), and comprehensive reporting options
+- **No custom CLI**: Uses standard pytest options (`-vv`, `--log-level`, `-m`, `--durations`, `--tb`, etc.) - no new options to learn
 
 ## Requirements
 

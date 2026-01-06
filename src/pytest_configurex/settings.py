@@ -168,6 +168,208 @@ class PytestSettings(BaseSettings):
         },
     )
 
+    # Reporting: durations
+    durations: int | None = Field(
+        default=None,
+        ge=0,
+        description="Show N slowest setup/test durations (N=0 for all). Maps to --durations.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("durations",),
+                cli_flags=("--durations",),
+            )
+        },
+    )
+
+    durations_min: float | None = Field(
+        default=None,
+        ge=0.0,
+        description="Minimal duration in seconds for inclusion in slowest list. Maps to --durations-min.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("durations_min",),
+                cli_flags=("--durations-min",),
+            )
+        },
+    )
+
+    # Reporting: summary options
+    no_header: bool = Field(
+        default=False,
+        description="Disable header. Maps to --no-header.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("no_header",),
+                cli_flags=("--no-header",),
+                apply_when="if_truthy",
+            )
+        },
+    )
+
+    no_summary: bool = Field(
+        default=False,
+        description="Disable summary. Maps to --no-summary.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("no_summary",),
+                cli_flags=("--no-summary",),
+                apply_when="if_truthy",
+            )
+        },
+    )
+
+    no_fold_skipped: bool = Field(
+        default=False,
+        description="Do not fold skipped tests in short summary. Maps to --no-fold-skipped.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("no_fold_skipped",),
+                cli_flags=("--no-fold-skipped",),
+                apply_when="if_truthy",
+            )
+        },
+    )
+
+    force_short_summary: bool = Field(
+        default=False,
+        description="Force condensed summary output regardless of verbosity level. Maps to --force-short-summary.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("force_short_summary",),
+                cli_flags=("--force-short-summary",),
+                apply_when="if_truthy",
+            )
+        },
+    )
+
+    # Reporting: test summary info
+    reportchars: str | None = Field(
+        default=None,
+        description="Show extra test summary info as specified by chars. Maps to -r.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("reportchars",),
+                cli_flags=("-r",),
+            )
+        },
+    )
+
+    disable_warnings: bool = Field(
+        default=False,
+        description="Disable warnings summary. Maps to --disable-warnings.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("disable_warnings",),
+                cli_flags=("--disable-warnings", "--disable-pytest-warnings"),
+                apply_when="if_truthy",
+            )
+        },
+    )
+
+    # Reporting: traceback options
+    showlocals: bool = Field(
+        default=False,
+        description="Show locals in tracebacks. Maps to --showlocals.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("showlocals",),
+                cli_flags=("-l", "--showlocals", "--no-showlocals"),
+                apply_when="if_truthy",
+            )
+        },
+    )
+
+    tbstyle: str | None = Field(
+        default=None,
+        description="Traceback print mode (auto/long/short/line/native/no). Maps to --tb.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("tbstyle",),
+                cli_flags=("--tb",),
+            )
+        },
+    )
+
+    show_capture: str | None = Field(
+        default=None,
+        description="Controls how captured stdout/stderr/log is shown on failed tests. Maps to --show-capture.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("showcapture",),
+                cli_flags=("--show-capture",),
+            )
+        },
+    )
+
+    full_trace: bool = Field(
+        default=False,
+        description="Don't cut any tracebacks (default is to cut). Maps to --full-trace.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("fulltrace",),
+                cli_flags=("--full-trace",),
+                apply_when="if_truthy",
+            )
+        },
+    )
+
+    # Reporting: output options
+    color: str | None = Field(
+        default=None,
+        description="Color terminal output (yes/no/auto). Maps to --color.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("color",),
+                cli_flags=("--color",),
+            )
+        },
+    )
+
+    code_highlight: str | None = Field(
+        default=None,
+        description="Whether code should be highlighted (yes/no). Maps to --code-highlight.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("code_highlight",),
+                cli_flags=("--code-highlight",),
+            )
+        },
+    )
+
+    pastebin: str | None = Field(
+        default=None,
+        description="Send failed|all info to bpaste.net pastebin service. Maps to --pastebin.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("pastebin",),
+                cli_flags=("--pastebin",),
+            )
+        },
+    )
+
+    # Reporting: junit-xml
+    junit_xml: str | None = Field(
+        default=None,
+        description="Create junit-xml style report file at given path. Maps to --junitxml.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("xmlpath",),
+                cli_flags=("--junitxml", "--junit-xml"),
+            )
+        },
+    )
+
+    junit_prefix: str | None = Field(
+        default=None,
+        description="Prepend prefix to classnames in junit-xml output. Maps to --junitprefix.",
+        json_schema_extra={
+            "pytest_mapping": PytestFieldMapping(
+                pytest_options=("junitprefix",),
+                cli_flags=("--junitprefix", "--junit-prefix"),
+            )
+        },
+    )
+
     model_config = SettingsConfigDict(
         env_prefix="X_",
         env_file=None,  # Handled via _env_file parameter in load_settings

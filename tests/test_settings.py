@@ -111,6 +111,13 @@ class TestLoadSettings:
                 X_COVERAGE_REPORT=html
                 X_XDIST_NUMPROCESSES=4
                 X_XDIST_DIST=loadscope
+                X_DURATIONS=10
+                X_DURATIONS_MIN=0.5
+                X_NO_HEADER=true
+                X_REPORTCHARS=fEsx
+                X_SHOWLOCALS=true
+                X_TBSTYLE=short
+                X_JUNIT_XML=report.xml
                 """
             ).strip()
         )
@@ -127,6 +134,13 @@ class TestLoadSettings:
         assert settings.coverage_report == "html"
         assert settings.xdist_numprocesses == 4
         assert settings.xdist_dist == "loadscope"
+        assert settings.durations == 10
+        assert settings.durations_min == 0.5
+        assert settings.no_header is True
+        assert settings.reportchars == "fEsx"
+        assert settings.showlocals is True
+        assert settings.tbstyle == "short"
+        assert settings.junit_xml == "report.xml"
 
     def test_load_settings_with_no_config_root(self, monkeypatch):
         """Test loading settings defaults to current working directory."""
@@ -391,3 +405,227 @@ class TestPytestSettingsRepr:
         assert "verbosity=2" in repr_str
         assert "log_level='INFO'" in repr_str or 'log_level="INFO"' in repr_str
         assert "markers='slow'" in repr_str or 'markers="slow"' in repr_str
+
+
+class TestApplyReportingSettings:
+    """Tests for reporting field mappings via apply_to_pytest."""
+
+    def test_apply_durations(self):
+        """Test durations is applied when not set via CLI."""
+        settings = PytestSettings(durations=10)
+        config = Mock()
+        config.option.durations = None
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.durations == 10
+
+    def test_apply_durations_min(self):
+        """Test durations_min is applied when not set via CLI."""
+        settings = PytestSettings(durations_min=1.5)
+        config = Mock()
+        config.option.durations_min = None
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.durations_min == 1.5
+
+    def test_skip_durations_when_cli_set(self):
+        """Test durations is not applied when set via CLI."""
+        settings = PytestSettings(durations=10)
+        config = Mock()
+        config.option.durations = 5
+        config.invocation_params.args = ["--durations=5"]
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.durations == 5
+
+    def test_apply_no_header(self):
+        """Test no_header is applied when not set via CLI."""
+        settings = PytestSettings(no_header=True)
+        config = Mock()
+        config.option.no_header = False
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.no_header is True
+
+    def test_apply_no_summary(self):
+        """Test no_summary is applied when not set via CLI."""
+        settings = PytestSettings(no_summary=True)
+        config = Mock()
+        config.option.no_summary = False
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.no_summary is True
+
+    def test_apply_reportchars(self):
+        """Test reportchars is applied when not set via CLI."""
+        settings = PytestSettings(reportchars="fEsx")
+        config = Mock()
+        config.option.reportchars = None
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.reportchars == "fEsx"
+
+    def test_skip_reportchars_when_cli_set(self):
+        """Test reportchars is not applied when set via CLI."""
+        settings = PytestSettings(reportchars="fEsx")
+        config = Mock()
+        config.option.reportchars = "a"
+        config.invocation_params.args = ["-r", "a"]
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.reportchars == "a"
+
+    def test_apply_disable_warnings(self):
+        """Test disable_warnings is applied when not set via CLI."""
+        settings = PytestSettings(disable_warnings=True)
+        config = Mock()
+        config.option.disable_warnings = False
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.disable_warnings is True
+
+    def test_apply_showlocals(self):
+        """Test showlocals is applied when not set via CLI."""
+        settings = PytestSettings(showlocals=True)
+        config = Mock()
+        config.option.showlocals = False
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.showlocals is True
+
+    def test_skip_showlocals_when_cli_set(self):
+        """Test showlocals is not applied when set via CLI."""
+        settings = PytestSettings(showlocals=True)
+        config = Mock()
+        config.option.showlocals = False
+        config.invocation_params.args = ["--no-showlocals"]
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.showlocals is False
+
+    def test_apply_tbstyle(self):
+        """Test tbstyle is applied when not set via CLI."""
+        settings = PytestSettings(tbstyle="short")
+        config = Mock()
+        config.option.tbstyle = None
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.tbstyle == "short"
+
+    def test_skip_tbstyle_when_cli_set(self):
+        """Test tbstyle is not applied when set via CLI."""
+        settings = PytestSettings(tbstyle="short")
+        config = Mock()
+        config.option.tbstyle = "long"
+        config.invocation_params.args = ["--tb=long"]
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.tbstyle == "long"
+
+    def test_apply_show_capture(self):
+        """Test show_capture is applied when not set via CLI."""
+        settings = PytestSettings(show_capture="no")
+        config = Mock()
+        config.option.showcapture = None
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.showcapture == "no"
+
+    def test_apply_full_trace(self):
+        """Test full_trace is applied when not set via CLI."""
+        settings = PytestSettings(full_trace=True)
+        config = Mock()
+        config.option.fulltrace = False
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.fulltrace is True
+
+    def test_apply_color(self):
+        """Test color is applied when not set via CLI."""
+        settings = PytestSettings(color="yes")
+        config = Mock()
+        config.option.color = None
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.color == "yes"
+
+    def test_apply_code_highlight(self):
+        """Test code_highlight is applied when not set via CLI."""
+        settings = PytestSettings(code_highlight="no")
+        config = Mock()
+        config.option.code_highlight = None
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.code_highlight == "no"
+
+    def test_apply_pastebin(self):
+        """Test pastebin is applied when not set via CLI."""
+        settings = PytestSettings(pastebin="failed")
+        config = Mock()
+        config.option.pastebin = None
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.pastebin == "failed"
+
+    def test_apply_junit_xml(self):
+        """Test junit_xml is applied when not set via CLI."""
+        settings = PytestSettings(junit_xml="report.xml")
+        config = Mock()
+        config.option.xmlpath = None
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.xmlpath == "report.xml"
+
+    def test_skip_junit_xml_when_cli_set(self):
+        """Test junit_xml is not applied when set via CLI."""
+        settings = PytestSettings(junit_xml="report.xml")
+        config = Mock()
+        config.option.xmlpath = "cli-report.xml"
+        config.invocation_params.args = ["--junitxml=cli-report.xml"]
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.xmlpath == "cli-report.xml"
+
+    def test_apply_junit_prefix(self):
+        """Test junit_prefix is applied when not set via CLI."""
+        settings = PytestSettings(junit_prefix="MyProject")
+        config = Mock()
+        config.option.junitprefix = None
+        config.invocation_params.args = []
+
+        settings.apply_to_pytest(config)
+
+        assert config.option.junitprefix == "MyProject"
